@@ -28,7 +28,7 @@ Hệ thống quản lý bán hàng nội bộ.
 
 \- \[x] Thiết kế ERD
 
-\- \[ ] Thiết kế kiến trúc ASP.NET Core
+\- \[x] Thiết kế kiến trúc ASP.NET Core
 
 \- \[ ] Khởi tạo project
 
