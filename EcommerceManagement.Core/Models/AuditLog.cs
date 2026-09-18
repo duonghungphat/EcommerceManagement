@@ -4,7 +4,7 @@
     {
         public string Action { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string? IpAddress { get; set; }
+        public string IpAddress { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public int? EntityId { get; set; }
         public string EntityName { get; set; } = string.Empty;
