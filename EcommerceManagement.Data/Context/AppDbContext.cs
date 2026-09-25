@@ -50,6 +50,10 @@ namespace EcommerceManagement.Data.Context
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Product>()
+                .Property(p => p.StockQuantity)
+                .IsConcurrencyToken();
+
             modelBuilder.Entity<Category>()
                 .Property(c => c.Name)
                 .IsRequired()
@@ -89,6 +93,10 @@ namespace EcommerceManagement.Data.Context
                 .WithOne(p => p.Order)
                 .HasForeignKey(p => p.OrderId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.PaymentVersion)
+                .IsConcurrencyToken();
 
             modelBuilder.Entity<OrderItem>()
                 .Property(oi => oi.UnitPrice)

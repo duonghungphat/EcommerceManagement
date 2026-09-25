@@ -11,6 +11,7 @@ namespace EcommerceManagement.Core.Models
         public string OrderCode { get; set; } = string.Empty;
         public int CustomerId { get; set; }
         public int CreatedByUserId { get; set; }
+        public int PaymentVersion { get; set; } = 0;
         public ApplicationUser CreatedByUser { get; set; } = null!;
         public Customer Customer { get; set; } = null!;
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

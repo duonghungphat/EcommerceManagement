@@ -1,0 +1,104 @@
+﻿@model ProductViewModel
+
+@{
+    ViewData["Title"] = "Sửa sản phẩm";
+}
+
+<h2>Sửa sản phẩm</h2>
+
+<form asp-action="Edit" method="post">
+
+    <input asp-for="Id" type="hidden" />
+
+    <div asp-validation-summary="ModelOnly"
+         class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name"
+               class="form-label"></label>
+
+        <input asp-for="Name"
+               class="form-control" />
+
+        <span asp-validation-for="Name"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SKU"
+               class="form-label"></label>
+
+        <input asp-for="SKU"
+               class="form-control" />
+
+        <span asp-validation-for="SKU"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Price"
+               class="form-label"></label>
+
+        <input asp-for="Price"
+               class="form-control" />
+
+        <span asp-validation-for="Price"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StockQuantity"
+               class="form-label"></label>
+
+        <input asp-for="StockQuantity"
+               class="form-control" />
+
+        <span asp-validation-for="StockQuantity"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CategoryId"
+               class="form-label">
+            Danh mục
+        </label>
+
+        <select asp-for="CategoryId"
+                class="form-select">
+
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id">
+                    @category.Name
+                </option>
+            }
+
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Status"
+               class="form-label">
+            Trạng thái
+        </label>
+
+        <select asp-for="Status"
+                asp-items="Html.GetEnumSelectList<ProductStatus>()"
+                class="form-select">
+        </select>
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary">
+        Cập nhật
+    </button>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Quay lại
+    </a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
