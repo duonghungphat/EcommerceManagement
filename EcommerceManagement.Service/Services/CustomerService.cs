@@ -119,5 +119,67 @@ namespace EcommerceManagement.Service.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<CustomerListViewModel> SearchAsync(string? searchTerm)
+        {
+            var query = _unitOfWork.Customers
+                .BuildQuery(c => true);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.Trim();
+
+                query = query.Where(c =>
+                    c.FullName.Contains(searchTerm) ||
+                    c.Email.Contains(searchTerm) ||
+                    c.PhoneNumber.Contains(searchTerm));
+            }
+
+            var customers = await query
+                .OrderBy(c => c.FullName)
+                .Select(c => new CustomerViewModel
+                {
+                    Id = c.Id,
+                    FullName = c.FullName,
+                    Email = c.Email,
+                    PhoneNumber = c.PhoneNumber,
+                    Address = c.Address,
+                    CreatedAt = c.CreatedAt
+                })
+                .ToListAsync();
+
+            return new CustomerListViewModel
+            {
+                SearchTerm = searchTerm,
+                Customers = customers
+            };
+        }
+
+        public async Task<CustomerOrderHistoryViewModel?> GetOrderHistoryAsync(int id)
+        {
+            var customer = await GetByIdAsync(id);
+
+            if (customer == null)
+                return null;
+
+            var orders = await _unitOfWork.Orders
+                .BuildQuery(o => o.CustomerId == id)
+                .OrderByDescending(o => o.CreatedAt)
+                .Select(o => new CustomerOrderItemViewModel
+                {
+                    Id = o.Id,
+                    OrderCode = o.OrderCode,
+                    CreatedAt = o.CreatedAt,
+                    Status = o.Status,
+                    TotalAmount = o.TotalAmount
+                })
+                .ToListAsync();
+
+            return new CustomerOrderHistoryViewModel
+            {
+                Customer = customer,
+                Orders = orders
+            };
+        }
     }
 }

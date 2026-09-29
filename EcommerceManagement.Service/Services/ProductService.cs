@@ -123,9 +123,7 @@ namespace EcommerceManagement.Service.Services
             string sku = model.SKU.Trim();
 
             bool skuExists = await _unitOfWork.Products
-                .BuildQuery(p =>
-                    p.SKU == sku &&
-                    p.Id != model.Id)
+                .BuildQuery(p => p.SKU == sku && p.Id != model.Id)
                 .AnyAsync();
 
             if (skuExists)
@@ -144,6 +142,7 @@ namespace EcommerceManagement.Service.Services
             product.StockQuantity = model.StockQuantity;
             product.Status = model.Status;
             product.CategoryId = model.CategoryId;
+            product.ImagePath = model.ImagePath;
 
             await _unitOfWork.SaveChangesAsync();
         }
@@ -166,6 +165,62 @@ namespace EcommerceManagement.Service.Services
             _unitOfWork.Products.Delete(product);
 
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<ProductListViewModel> GetPagedAsync(string? searchTerm, int? categoryId, int page, int pageSize)
+        {
+            page = Math.Max(page, 1);
+
+            var query = _unitOfWork.Products
+                .BuildQuery(p => true);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.Trim();
+
+                query = query.Where(p => p.Name.Contains(searchTerm) || p.SKU.Contains(searchTerm));
+            }
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            int totalCount = await query.CountAsync();
+
+            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            if (totalPages > 0 && page > totalPages)
+            {
+                page = totalPages;
+            }
+
+            var products = await query
+                .OrderBy(p => p.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProductViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    SKU = p.SKU,
+                    Price = p.Price,
+                    StockQuantity = p.StockQuantity,
+                    Status = p.Status,
+                    CategoryId = p.CategoryId,
+                    CategoryName = p.Category.Name,
+                    ImagePath = p.ImagePath
+                })
+                .ToListAsync();
+
+            return new ProductListViewModel
+            {
+                Products = products,
+                SearchTerm = searchTerm,
+                CategoryId = categoryId,
+                Page = page,
+                TotalPages = totalPages
+            };
         }
     }
 }

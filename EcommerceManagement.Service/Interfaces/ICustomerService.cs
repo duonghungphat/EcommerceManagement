@@ -6,7 +6,11 @@ namespace EcommerceManagement.Service.Interfaces
     {
         Task<List<CustomerViewModel>> GetAllAsync();
 
+        Task<CustomerListViewModel> SearchAsync(string? searchTerm);
+
         Task<CustomerViewModel?> GetByIdAsync(int id);
+
+        Task<CustomerOrderHistoryViewModel?> GetOrderHistoryAsync(int id);
 
         Task CreateAsync(CustomerViewModel model);
 

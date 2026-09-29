@@ -1,0 +1,47 @@
+﻿@model CustomerOrderHistoryViewModel
+
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+}
+
+<h2>Lịch sử đơn hàng</h2>
+
+<p>
+    Khách hàng:
+    <strong>@Model.Customer.FullName</strong>
+</p>
+
+<p>
+    Email: @Model.Customer.Email
+</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Mã đơn</th>
+            <th>Ngày tạo</th>
+            <th>Trạng thái</th>
+            <th>Tổng tiền</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var order in Model.Orders)
+        {
+            <tr>
+                <td>@order.OrderCode</td>
+
+                <td>
+                    @order.CreatedAt.ToString(
+                    "dd/MM/yyyy HH:mm")
+            </td>
+
+            <td>@order.Status</td>
+
+            <td>
+                @order.TotalAmount.ToString("N0") đ
+            </td>
+        </tr>
+                }
+    </tbody>
+</table>

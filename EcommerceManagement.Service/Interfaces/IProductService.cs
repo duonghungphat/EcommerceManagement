@@ -6,6 +6,8 @@ namespace EcommerceManagement.Service.Interfaces
     {
         Task<List<ProductViewModel>> GetAllAsync();
 
+        Task<ProductListViewModel> GetPagedAsync(string? searchTerm, int? categoryId, int page, int pageSize);
+
         Task<ProductViewModel?> GetByIdAsync(int id);
 
         Task CreateAsync(ProductViewModel model);

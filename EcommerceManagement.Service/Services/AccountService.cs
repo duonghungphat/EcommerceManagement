@@ -1,6 +1,6 @@
 ﻿using EcommerceManagement.Core.Models;
+using EcommerceManagement.Core.ViewModels;
 using EcommerceManagement.Data.UnitOfWork;
-using EcommerceManagement.Service.DTOs;
 using EcommerceManagement.Service.Interfaces;
 using EcommerceManagement.Service.Security;
 using Microsoft.EntityFrameworkCore;
@@ -10,24 +10,68 @@ namespace EcommerceManagement.Service.Services
     public class AccountService : IAccountService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService _auditLogService;
 
-        public AccountService(IUnitOfWork unitOfWork)
+        public AccountService(IUnitOfWork unitOfWork, IAuditLogService auditLogService)
         {
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
-        public async Task CreateAsync(CreateUserRequest request)
+        public async Task<List<UserListItemViewModel>> GetAllAsync()
         {
-            if (string.IsNullOrWhiteSpace(request.FullName))
-                throw new InvalidOperationException("Tên nhân viên không được để trống.");
+            return await _unitOfWork.Users
+                .BuildQuery(u => true)
+                .OrderBy(u => u.FullName)
+                .Select(u => new UserListItemViewModel
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    RoleId = u.RoleId,
+                    RoleName = u.Role.Name,
+                    IsActive = u.IsActive,
+                    LockoutEnd = u.LockoutEnd
+                })
+                .ToListAsync();
+        }
 
-            string email = request.Email?.Trim().ToLowerInvariant()
-                ?? string.Empty;
+        public async Task<UserListItemViewModel?> GetByIdAsync(int userId)
+        {
+            return await _unitOfWork.Users
+                .BuildQuery(u => u.Id == userId)
+                .Select(u => new UserListItemViewModel
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    RoleId = u.RoleId,
+                    RoleName = u.Role.Name,
+                    IsActive = u.IsActive,
+                    LockoutEnd = u.LockoutEnd
+                })
+                .FirstOrDefaultAsync();
+        }
 
-            if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email))
-                throw new InvalidOperationException("Email không hợp lệ.");
+        public async Task<List<RoleOptionViewModel>> GetRolesAsync()
+        {
+            return await _unitOfWork.Roles
+                .BuildQuery(r => true)
+                .OrderBy(r => r.Id)
+                .Select(r => new RoleOptionViewModel
+                {
+                    Id = r.Id,
+                    Name = r.Name
+                })
+                .ToListAsync();
+        }
 
-            ValidatePassword(request.Password);
+        public async Task CreateAsync(UserCreateViewModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.FullName))
+                throw new InvalidOperationException("Họ tên không được để trống.");
+
+            string email = model.Email.Trim().ToLowerInvariant();
 
             bool emailExists = await _unitOfWork.Users
                 .BuildQuery(u => u.Email == email)
@@ -36,24 +80,53 @@ namespace EcommerceManagement.Service.Services
             if (emailExists)
                 throw new InvalidOperationException("Email đã tồn tại.");
 
+            ValidatePassword(model.Password);
+
             bool roleExists = await _unitOfWork.Roles
-                .BuildQuery(r => r.Id == request.RoleId)
+                .BuildQuery(r => r.Id == model.RoleId)
                 .AnyAsync();
 
             if (!roleExists)
-                throw new InvalidOperationException("Role không tồn tại.");
+                throw new InvalidOperationException("Vai trò không tồn tại.");
 
             var user = new ApplicationUser
             {
-                FullName = request.FullName.Trim(),
+                FullName = model.FullName.Trim(),
                 Email = email,
-                PasswordHash = PasswordHelper.HashPassword(request.Password),
-                RoleId = request.RoleId,
+                PasswordHash = PasswordHelper.HashPassword(model.Password),
+                RoleId = model.RoleId,
                 IsActive = true,
                 FailedLoginAttempts = 0
             };
 
             await _unitOfWork.Users.AddAsync(user);
+
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task UpdateRoleAsync(int userId, int roleId, int actorUserId, string ipAddress)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+
+            if (user == null)
+                throw new InvalidOperationException("Tài khoản không tồn tại.");
+
+            var newRole = await _unitOfWork.Roles.GetByIdAsync(roleId);
+
+            if (newRole == null)
+                throw new InvalidOperationException("Vai trò không tồn tại.");
+
+            if (user.RoleId == roleId)
+                return;
+
+            var oldRole = await _unitOfWork.Roles.GetByIdAsync(user.RoleId);
+
+            string oldRoleName = oldRole?.Name ?? "Không xác định";
+
+            user.RoleId = roleId;
+
+            await _auditLogService.RecordAsync("RoleChanged", "ApplicationUser", user.Id, $"Thay đổi vai trò từ {oldRoleName} sang {newRole.Name}.", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -85,19 +158,35 @@ namespace EcommerceManagement.Service.Services
             ValidatePassword(newPassword);
 
             user.PasswordHash = PasswordHelper.HashPassword(newPassword);
+
             user.FailedLoginAttempts = 0;
             user.LockoutEnd = null;
 
             await _unitOfWork.SaveChangesAsync();
         }
 
+        public async Task ChangePasswordAsync(int userId, string oldPassword, string newPassword)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+
+            if (user == null)
+                throw new InvalidOperationException("Tài khoản không tồn tại.");
+
+            if (!PasswordHelper.VerifyPassword(oldPassword, user.PasswordHash))
+            {
+                throw new InvalidOperationException("Mật khẩu hiện tại không đúng.");
+            }
+
+            ValidatePassword(newPassword);
+
+            user.PasswordHash = PasswordHelper.HashPassword(newPassword);
+
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         private static void ValidatePassword(string password)
         {
-            if (string.IsNullOrWhiteSpace(password) ||
-                password.Length < 8 ||
-                !password.Any(char.IsUpper) ||
-                !password.Any(char.IsLower) ||
-                !password.Any(char.IsDigit))
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 8 || !password.Any(char.IsUpper) || !password.Any(char.IsLower) || !password.Any(char.IsDigit))
             {
                 throw new InvalidOperationException("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.");
             }

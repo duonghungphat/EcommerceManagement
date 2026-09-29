@@ -6,7 +6,7 @@
 
 <h2>Sửa sản phẩm</h2>
 
-<form asp-action="Edit" method="post">
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
 
     <input asp-for="Id" type="hidden" />
 
@@ -86,6 +86,33 @@
                 asp-items="Html.GetEnumSelectList<ProductStatus>()"
                 class="form-select">
         </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">
+            Ảnh sản phẩm
+        </label>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ImagePath))
+        {
+            <div class="mb-2">
+                <img src="@Model.ImagePath"
+                     alt="@Model.Name"
+                     style="width: 120px;
+                            height: 120px;
+                            object-fit: cover;"
+                     class="rounded border" />
+            </div>
+        }
+
+        <input type="file"
+               name="imageFile"
+               accept=".jpg,.jpeg,.png"
+               class="form-control" />
+
+        <small class="text-muted">
+            Để trống nếu không muốn thay ảnh.
+        </small>
     </div>
 
     <button type="submit"

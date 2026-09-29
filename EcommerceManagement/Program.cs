@@ -1,11 +1,10 @@
-using EcommerceManagement.Core.Models;
 using EcommerceManagement.Data.Context;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using EcommerceManagement.Infrastructure;
 using EcommerceManagement.Data.UnitOfWork;
 using EcommerceManagement.Service.Interfaces;
 using EcommerceManagement.Service.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +14,6 @@ builder.Services.AddControllersWithViews();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(connectionString!));
-
-builder.Services.AddScoped<IPasswordHasher<ApplicationUser>,PasswordHasher<ApplicationUser>>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -28,6 +25,12 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+    });
 
 var app = builder.Build();
 
@@ -48,6 +51,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -56,6 +60,6 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

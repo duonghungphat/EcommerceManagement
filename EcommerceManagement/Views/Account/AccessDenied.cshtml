@@ -1,0 +1,44 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+
+    <title>Không có quyền truy cập</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+
+<body class="bg-light">
+
+    <div class="container text-center mt-5">
+
+        <h1 class="text-danger">
+            403
+        </h1>
+
+        <h4>
+            Không có quyền truy cập
+        </h4>
+
+        <p class="text-muted">
+            Tài khoản của bạn không có quyền sử dụng chức năng này.
+        </p>
+
+        <a asp-area="Management"
+           asp-controller="Category"
+           asp-action="Index"
+           class="btn btn-primary">
+
+            Quay lại hệ thống
+
+        </a>
+
+    </div>
+
+</body>
+</html>

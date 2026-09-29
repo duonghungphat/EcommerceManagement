@@ -1,0 +1,76 @@
+﻿@model UserCreateViewModel
+
+@{
+    ViewData["Title"] = "Tạo tài khoản";
+}
+
+<h2>Tạo tài khoản</h2>
+
+<form asp-action="Create" method="post">
+
+    <div asp-validation-summary="ModelOnly"
+         class="text-danger">
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="FullName">Họ tên</label>
+        <input asp-for="FullName"
+               class="form-control" />
+        <span asp-validation-for="FullName"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Email">Email</label>
+        <input asp-for="Email"
+               class="form-control" />
+        <span asp-validation-for="Email"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Password">Mật khẩu</label>
+        <input asp-for="Password"
+               type="password"
+               class="form-control" />
+        <span asp-validation-for="Password"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ConfirmPassword">
+            Xác nhận mật khẩu
+        </label>
+
+        <input asp-for="ConfirmPassword"
+               type="password"
+               class="form-control" />
+
+        <span asp-validation-for="ConfirmPassword"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="RoleId">Vai trò</label>
+
+        <select asp-for="RoleId"
+                class="form-select">
+
+            <option value="">
+                -- Chọn vai trò --
+            </option>
+
+            @foreach (var role in Model.Roles)
+            {
+                <option value="@role.Id">
+                    @role.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary">
+        Lưu
+    </button>
+</form>

@@ -1,10 +1,12 @@
 ﻿using EcommerceManagement.Core.ViewModels;
 using EcommerceManagement.Service.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EcommerceManagement.Areas.Management.Controllers
 {
     [Area("Management")]
+    [Authorize]
     public class CategoryController : Controller
     {
         private readonly ICategoryService _categoryService;
@@ -22,12 +24,14 @@ namespace EcommerceManagement.Areas.Management.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Manager")]
         public IActionResult Create()
         {
             return View(new CategoryViewModel());
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategoryViewModel model)
         {
@@ -51,6 +55,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Edit(int id)
         {
             var model = await _categoryService.GetByIdAsync(id);
@@ -62,6 +67,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CategoryViewModel model)
         {
@@ -85,6 +91,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {

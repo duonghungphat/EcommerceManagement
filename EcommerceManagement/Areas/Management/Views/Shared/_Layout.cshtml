@@ -1,49 +1,261 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using System.Security.Claims
+
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EcommerceManagement</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/EcommerceManagement.styles.css" asp-append-version="true" />
+
+    <title>@ViewData["Title"] - Ecommerce Management</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <style>
+        body {
+            margin: 0;
+            background-color: #f5f6fa;
+        }
+
+        .sidebar {
+            width: 250px;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #212529;
+            color: white;
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            border-bottom: 1px solid #343a40;
+        }
+
+        .sidebar-menu {
+            padding: 15px 10px;
+        }
+
+            .sidebar-menu a {
+                display: block;
+                padding: 12px 15px;
+                margin-bottom: 5px;
+                text-decoration: none;
+                color: #ced4da;
+                border-radius: 6px;
+            }
+
+                .sidebar-menu a:hover {
+                    background-color: #343a40;
+                    color: white;
+                }
+
+            .sidebar-menu .disabled-link {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 65px;
+            background-color: white;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+        }
+
+        .page-content {
+            padding: 25px;
+        }
+
+        .role-badge {
+            font-size: 12px;
+        }
+    </style>
 </head>
+
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">EcommerceManagement</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <div class="sidebar-brand">
+            Ecommerce Management
+        </div>
+
+        <div class="sidebar-menu">
+
+            <div class="text-secondary small px-3 mb-2">
+                QUẢN LÝ
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+            <a asp-area="Management"
+               asp-controller="Category"
+               asp-action="Index">
+                📁 Danh mục
+            </a>
+
+            <a asp-area="Management"
+               asp-controller="Product"
+               asp-action="Index">
+                📦 Sản phẩm
+            </a>
+
+            <a asp-area="Management"
+               asp-controller="Customer"
+               asp-action="Index">
+                👥 Khách hàng
+            </a>
+
+            <a href="#"
+               class="disabled-link"
+               onclick="return false;">
+                🧾 Đơn hàng
+                <span class="badge bg-secondary float-end">
+                    Sắp làm
+                </span>
+            </a>
+
+            <a href="#"
+               class="disabled-link"
+               onclick="return false;">
+                💳 Thanh toán
+                <span class="badge bg-secondary float-end">
+                    Sắp làm
+                </span>
+            </a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="text-secondary small px-3 mt-4 mb-2">
+                    QUẢN TRỊ
+                </div>
+
+                <a asp-area="Management"
+                   asp-controller="User"
+                   asp-action="Index">
+                    👤 Tài khoản
+                </a>
+
+                <a href="#"
+                   class="disabled-link"
+                   onclick="return false;">
+                    📜 Nhật ký hệ thống
+                    <span class="badge bg-secondary float-end">
+                        Sắp làm
+                    </span>
+                </a>
+            }
+
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - EcommerceManagement - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- TOPBAR -->
+        <div class="topbar">
+
+            <div>
+                <strong>
+                    @ViewData["Title"]
+                </strong>
+            </div>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="text-end">
+
+                        <div>
+                            <strong>
+                                @User.Identity.Name
+                            </strong>
+                        </div>
+
+                        <span class="badge bg-primary role-badge">
+                            @User.FindFirst(ClaimTypes.Role)?.Value
+                        </span>
+
+                    </div>
+
+                    <form asp-area=""
+                          asp-controller="Account"
+                          asp-action="Logout"
+                          method="post">
+
+                        <button type="submit"
+                                class="btn btn-outline-danger btn-sm">
+                            Đăng xuất
+                        </button>
+
+                    </form>
+
+                </div>
+            }
+
         </div>
-    </footer>
+
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    @TempData["Success"]
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert">
+                    </button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show">
+                    @TempData["Error"]
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert">
+                    </button>
+                </div>
+            }
+
+            <main role="main">
+                @RenderBody()
+            </main>
+
+        </div>
+
+    </div>
+
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true">
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

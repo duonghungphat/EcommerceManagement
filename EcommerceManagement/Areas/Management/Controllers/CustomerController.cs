@@ -1,10 +1,12 @@
 ﻿using EcommerceManagement.Core.ViewModels;
 using EcommerceManagement.Service.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceManagement.Areas.Management.Controllers
 {
     [Area("Management")]
+    [Authorize]
     public class CustomerController : Controller
     {
         private readonly ICustomerService _customerService;
@@ -15,11 +17,11 @@ namespace EcommerceManagement.Areas.Management.Controllers
             _customerService = customerService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchTerm)
         {
-            var customers = await _customerService.GetAllAsync();
+            var model = await _customerService.SearchAsync(searchTerm);
 
-            return View(customers);
+            return View(model);
         }
 
         [HttpGet]
@@ -92,6 +94,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -107,6 +110,17 @@ namespace EcommerceManagement.Areas.Management.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> History(int id)
+        {
+            var model = await _customerService.GetOrderHistoryAsync(id);
+
+            if (model == null)
+                return NotFound();
+
+            return View(model);
         }
     }
 }

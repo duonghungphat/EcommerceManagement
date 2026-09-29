@@ -1,8 +1,24 @@
-﻿@model IEnumerable<CustomerViewModel>
+﻿@model CustomerListViewModel
 
 @{
     ViewData["Title"] = "Khách hàng";
 }
+
+<form method="get"
+      asp-action="Index"
+      class="mb-3">
+
+    <input asp-for="SearchTerm"
+           placeholder="Tìm tên, email hoặc số điện thoại..." />
+
+    <button type="submit">
+        Tìm kiếm
+    </button>
+
+    <a asp-action="Index">
+        Xóa lọc
+    </a>
+</form>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Danh sách khách hàng</h2>
@@ -11,21 +27,8 @@
        class="btn btn-primary">
         Thêm khách hàng
     </a>
+    
 </div>
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["Success"]
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">
-        @TempData["Error"]
-    </div>
-}
 
 <table class="table table-bordered table-striped">
     <thead>
@@ -40,7 +43,7 @@
     </thead>
 
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Customers)
         {
             <tr>
                 <td>@item.FullName</td>
@@ -48,7 +51,7 @@
                 <td>@item.PhoneNumber</td>
                 <td>@item.Address</td>
                 <td>
-                    @item.CreatedAt.ToString("dd/MM/yyyy")
+                    @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                 </td>
 
                 <td>
@@ -58,17 +61,25 @@
                         Sửa
                     </a>
 
-                    <form asp-action="Delete"
-                          asp-route-id="@item.Id"
-                          method="post"
-                          class="d-inline"
-                          onsubmit="return confirm('Bạn có chắc muốn xóa khách hàng này?');">
+                    <a asp-action="History"
+                       asp-route-id="@item.Id">
+                        Lịch sử đơn hàng
+                    </a> 
 
-                        <button type="submit"
-                                class="btn btn-danger btn-sm">
-                            Xóa
-                        </button>
-                    </form>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                    {
+                        <form asp-action="Delete"
+                              asp-route-id="@item.Id"
+                              method="post"
+                              class="d-inline"
+                              onsubmit="return confirm('Bạn có chắc muốn xóa khách hàng này?');">
+
+                            <button type="submit"
+                                    class="btn btn-danger btn-sm">
+                                Xóa
+                            </button>
+                        </form>
+                    }
                 </td>
             </tr>
         }

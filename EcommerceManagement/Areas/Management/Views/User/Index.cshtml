@@ -1,0 +1,77 @@
+﻿@model IEnumerable<UserListItemViewModel>
+
+@{
+    ViewData["Title"] = "Tài khoản";
+}
+
+<h2>Danh sách tài khoản</h2>
+
+<a asp-action="Create"
+   class="btn btn-primary mb-3">
+    Tạo tài khoản
+</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.FullName</td>
+                <td>@item.Email</td>
+                <td>@item.RoleName</td>
+
+                <td>
+                    @(item.IsActive
+                                    ? "Đang hoạt động"
+                                    : "Đã khóa")
+                                            </td>
+
+                <td>
+                    <a asp-action="EditRole"
+                       asp-route-id="@item.Id">
+                        Đổi vai trò
+                    </a>
+
+                    |
+
+                    <a asp-action="ResetPassword"
+                       asp-route-id="@item.Id">
+                        Đặt lại mật khẩu
+                    </a>
+
+                    |
+
+                    <form asp-action="ToggleActive"
+                          method="post"
+                          class="d-inline">
+
+                        <input type="hidden"
+                               name="id"
+                               value="@item.Id" />
+
+                        <input type="hidden"
+                               name="isActive"
+                               value="@(!item.IsActive)" />
+
+                        <button type="submit"
+                                class="btn btn-link p-0">
+                            @(item.IsActive
+                                                    ? "Khóa"
+                                                    : "Mở khóa")
+                    </button>
+                </form>
+            </td>
+        </tr>
+                }
+    </tbody>
+</table>
