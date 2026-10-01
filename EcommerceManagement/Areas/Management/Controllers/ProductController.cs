@@ -2,6 +2,7 @@
 using EcommerceManagement.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EcommerceManagement.Areas.Management.Controllers
 {
@@ -71,7 +72,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
                     model.ImagePath = uploadedImagePath;
                 }
 
-                await _productService.CreateAsync(model);
+                await _productService.CreateAsync(model, GetCurrentUserId(), GetIpAddress());
 
                 TempData["Success"] =
                     "Thêm sản phẩm thành công.";
@@ -148,7 +149,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
                     model.ImagePath = newImagePath;
                 }
 
-                await _productService.UpdateAsync(model);
+                await _productService.UpdateAsync(model, GetCurrentUserId(), GetIpAddress());
 
                 if (newImagePath != null && oldImagePath != null)
                 {
@@ -193,7 +194,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
                 string? imagePath = product.ImagePath;
 
-                await _productService.DeleteAsync(id);
+                await _productService.DeleteAsync(id, GetCurrentUserId(), GetIpAddress());
 
                 if (imagePath != null)
                 {
@@ -274,6 +275,16 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 System.IO.File.Delete(fullPath);
             }
+        }
+
+        private int GetCurrentUserId()
+        {
+            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        }
+
+        private string GetIpAddress()
+        {
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
         }
     }
 }

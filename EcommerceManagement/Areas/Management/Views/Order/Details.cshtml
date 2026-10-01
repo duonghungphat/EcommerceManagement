@@ -1,0 +1,346 @@
+﻿@using EcommerceManagement.Core.Enums
+@model EcommerceManagement.Core.ViewModels.OrderDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+}
+
+<h2>Chi tiết đơn hàng</h2>
+
+<hr />
+
+<h5>Thông tin đơn hàng</h5>
+
+<table class="table table-bordered">
+
+    <tr>
+        <th>Mã đơn</th>
+        <td>@Model.OrderCode</td>
+    </tr>
+
+    <tr>
+        <th>Khách hàng</th>
+        <td>@Model.CustomerName</td>
+    </tr>
+
+    <tr>
+        <th>Email</th>
+        <td>@Model.CustomerEmail</td>
+    </tr>
+
+    <tr>
+        <th>Số điện thoại</th>
+        <td>@Model.CustomerPhone</td>
+    </tr>
+
+    <tr>
+        <th>Người tạo</th>
+        <td>@Model.CreatedByName</td>
+    </tr>
+
+    <tr>
+        <th>Ngày tạo</th>
+        <td>
+            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+        </td>
+    </tr>
+
+    <tr>
+        <th>Trạng thái</th>
+        <td>@Model.StatusText</td>
+    </tr>
+
+    <tr>
+        <th>Ghi chú</th>
+        <td>
+            @(string.IsNullOrWhiteSpace(Model.Note) ? "Không có" : Model.Note)
+        </td>
+    </tr>
+
+</table>
+
+
+<h5>Sản phẩm</h5>
+
+<table class="table table-bordered">
+
+    <thead>
+        <tr>
+            <th>Sản phẩm</th>
+            <th>Số lượng</th>
+            <th>Đơn giá</th>
+            <th>Thành tiền</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.ProductName</td>
+
+                <td>@item.Quantity</td>
+
+                <td>
+                    @item.UnitPrice.ToString("N0") đ
+                </td>
+
+                <td>
+                    @item.LineTotal.ToString("N0") đ
+                </td>
+            </tr>
+        }
+
+    </tbody>
+
+</table>
+
+
+<div class="mb-4">
+
+    <p>
+        <strong>Tổng tiền đơn hàng:</strong>
+        @Model.TotalAmount.ToString("N0") đ
+    </p>
+
+    <p>
+        <strong>Đã thu ban đầu:</strong>
+        @Model.OriginalPaidAmount.ToString("N0") đ
+    </p>
+
+    <p>
+        <strong>Đã hoàn tiền:</strong>
+        @Model.RefundedAmount.ToString("N0") đ
+    </p>
+
+    <p>
+        <strong>Thực thu:</strong>
+        @Model.PaidAmount.ToString("N0") đ
+    </p>
+
+    <p>
+        <strong>Còn phải thu:</strong>
+        @Model.RemainingAmount.ToString("N0") đ
+    </p>
+
+</div>
+
+
+@if (Model.Status != OrderStatus.Cancelled &&
+     Model.Status != OrderStatus.Completed)
+{
+    <h5>Cập nhật trạng thái</h5>
+
+    @if (Model.Status == OrderStatus.Pending)
+    {
+        <form asp-action="UpdateStatus"
+              method="post"
+              class="d-inline">
+
+            <input type="hidden"
+                   name="id"
+                   value="@Model.Id" />
+
+            <input type="hidden"
+                   name="status"
+                   value="@OrderStatus.Confirmed" />
+
+            <button type="submit"
+                    class="btn btn-primary">
+
+                Xác nhận đơn
+
+            </button>
+
+        </form>
+    }
+
+    @if (Model.Status == OrderStatus.Confirmed)
+    {
+        <form asp-action="UpdateStatus"
+              method="post"
+              class="d-inline">
+
+            <input type="hidden"
+                   name="id"
+                   value="@Model.Id" />
+
+            <input type="hidden"
+                   name="status"
+                   value="@OrderStatus.Shipping" />
+
+            <button type="submit"
+                    class="btn btn-primary">
+
+                Chuyển sang đang giao
+
+            </button>
+
+        </form>
+    }
+
+    @if (Model.Status == OrderStatus.Shipping)
+    {
+        <form asp-action="UpdateStatus"
+              method="post"
+              class="d-inline">
+
+            <input type="hidden"
+                   name="id"
+                   value="@Model.Id" />
+
+            <input type="hidden"
+                   name="status"
+                   value="@OrderStatus.Completed" />
+
+            <button type="submit"
+                    class="btn btn-success">
+
+                Hoàn thành đơn
+
+            </button>
+
+        </form>
+    }
+
+
+    @if (User.IsInRole("Admin") ||
+             User.IsInRole("Manager"))
+    {
+        <form asp-action="Cancel"
+              method="post"
+              class="d-inline"
+              onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+
+            <input type="hidden"
+                   name="id"
+                   value="@Model.Id" />
+
+            <button type="submit"
+                    class="btn btn-danger">
+
+                Hủy đơn hàng
+
+            </button>
+
+        </form>
+    }
+}
+
+
+<hr />
+
+<h5>Lịch sử thanh toán</h5>
+
+
+@if (Model.Status != OrderStatus.Cancelled &&
+     Model.RemainingAmount > 0)
+{
+    <a asp-area="Management"
+       asp-controller="Payment"
+       asp-action="Create"
+       asp-route-orderId="@Model.Id"
+       class="btn btn-primary mb-3">
+
+        Ghi nhận thanh toán
+
+    </a>
+}
+
+
+<table class="table table-bordered">
+
+    <thead>
+        <tr>
+            <th>Thời điểm</th>
+            <th>Số tiền</th>
+            <th>Phương thức</th>
+            <th>Mã giao dịch</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @if (Model.Payments.Count == 0)
+        {
+            <tr>
+                <td colspan="6"
+                    class="text-center text-muted">
+
+                    Chưa có giao dịch thanh toán.
+
+                </td>
+            </tr>
+        }
+
+        @foreach (var payment in Model.Payments)
+        {
+            <tr>
+
+                <td>
+                    @payment.TransactionAt.ToString("dd/MM/yyyy HH:mm")
+                </td>
+
+                <td>
+                    @payment.Amount.ToString("N0") đ
+                </td>
+
+                <td>
+                    @payment.MethodText
+                </td>
+
+                <td>
+                    @(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)
+                </td>
+
+                <td>
+                    @payment.StatusText
+                </td>
+
+                <td>
+
+                @if (payment.Status == PaymentStatus.Successful && (User.IsInRole("Admin") || User.IsInRole("Manager")))
+                    {
+                        <form asp-area="Management"
+                              asp-controller="Payment"
+                              asp-action="Refund"
+                              method="post"
+                              class="d-inline"
+                              onsubmit="return confirm('Bạn có chắc muốn hoàn tiền giao dịch này?');">
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@payment.Id" />
+
+                            <input type="hidden"
+                                   name="orderId"
+                                   value="@Model.Id" />
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-warning">
+
+                                Hoàn tiền
+
+                            </button>
+
+                        </form>
+                    }
+
+                </td>
+
+            </tr>
+        }
+
+    </tbody>
+</table>
+
+
+<a asp-action="Index"
+   class="btn btn-secondary">
+
+    Quay lại danh sách
+
+</a>

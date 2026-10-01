@@ -1,14 +1,16 @@
 ﻿using EcommerceManagement.Core.Enums;
-using EcommerceManagement.Core.Models;
+using EcommerceManagement.Core.ViewModels;
 
 namespace EcommerceManagement.Service.Interfaces
 {
     public interface IPaymentService
     {
-        Task<List<Payment>> GetByOrderIdAsync(int orderId);
+        Task<PaymentListViewModel> SearchAsync(PaymentStatus? status, DateTime? fromDate, DateTime? toDate);
 
-        Task<int> CreateAsync(int orderId, decimal amount, PaymentMethod method, string? transactionCode);
+        Task<PaymentCreateViewModel?> GetCreateModelAsync(int orderId);
 
-        Task RefundAsync(int paymentId);
+        Task<int> CreateAsync(PaymentCreateViewModel model, int actorUserId, string ipAddress);
+
+        Task RefundAsync(int paymentId, int actorUserId, string ipAddress);
     }
 }

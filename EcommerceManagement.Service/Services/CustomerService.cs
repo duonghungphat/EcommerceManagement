@@ -9,10 +9,12 @@ namespace EcommerceManagement.Service.Services
     public class CustomerService : ICustomerService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService _auditLogService;
 
-        public CustomerService(IUnitOfWork unitOfWork)
+        public CustomerService(IUnitOfWork unitOfWork, IAuditLogService auditLogService)
         {
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
         public async Task<List<CustomerViewModel>> GetAllAsync()
@@ -48,7 +50,7 @@ namespace EcommerceManagement.Service.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task CreateAsync(CustomerViewModel model)
+        public async Task CreateAsync(CustomerViewModel model, int actorUserId, string ipAddress)
         {
             string email = model.Email.Trim();
 
@@ -70,10 +72,12 @@ namespace EcommerceManagement.Service.Services
 
             await _unitOfWork.Customers.AddAsync(customer);
 
+            await _auditLogService.RecordAsync("CreateCustomer", "Customer", customer.Id == 0 ? null : customer.Id, $"Thêm khách hàng: {customer.FullName}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(CustomerViewModel model)
+        public async Task UpdateAsync(CustomerViewModel model, int actorUserId, string ipAddress)
         {
             var customer = await _unitOfWork.Customers
                 .GetByIdAsync(model.Id);
@@ -97,10 +101,12 @@ namespace EcommerceManagement.Service.Services
             customer.PhoneNumber = model.PhoneNumber.Trim();
             customer.Address = model.Address.Trim();
 
+            await _auditLogService.RecordAsync("UpdateCustomer", "Customer", customer.Id, $"Cập nhật khách hàng: {customer.FullName}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, int actorUserId, string ipAddress)
         {
             var customer = await _unitOfWork.Customers
                 .GetByIdAsync(id);
@@ -116,6 +122,8 @@ namespace EcommerceManagement.Service.Services
                 throw new InvalidOperationException("Khách hàng đã có đơn hàng nên không thể xóa.");
 
             _unitOfWork.Customers.Delete(customer);
+
+            await _auditLogService.RecordAsync("DeleteCustomer", "Customer", customer.Id, $"Xóa khách hàng: {customer.FullName}", ipAddress, actorUserId);
 
             await _unitOfWork.SaveChangesAsync();
         }

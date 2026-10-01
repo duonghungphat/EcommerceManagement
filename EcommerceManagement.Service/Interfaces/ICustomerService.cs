@@ -12,10 +12,10 @@ namespace EcommerceManagement.Service.Interfaces
 
         Task<CustomerOrderHistoryViewModel?> GetOrderHistoryAsync(int id);
 
-        Task CreateAsync(CustomerViewModel model);
+        Task CreateAsync(CustomerViewModel model, int actorUserId, string ipAddress);
 
-        Task UpdateAsync(CustomerViewModel model);
+        Task UpdateAsync(CustomerViewModel model, int actorUserId, string ipAddress);
 
-        Task DeleteAsync(int id);
+        Task DeleteAsync(int id, int actorUserId, string ipAddress);
     }
 }

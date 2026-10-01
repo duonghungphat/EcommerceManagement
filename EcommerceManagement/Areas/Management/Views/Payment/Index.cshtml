@@ -1,0 +1,155 @@
+﻿@using EcommerceManagement.Core.Enums
+@model EcommerceManagement.Core.ViewModels.PaymentListViewModel
+
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<h2>Lịch sử thanh toán</h2>
+
+<form method="get"
+      asp-action="Index"
+      class="row g-2 mb-3">
+
+    <div class="col-md-3">
+
+        <select asp-for="Status" class="form-select">
+
+            <option value="">
+                -- Tất cả trạng thái --
+            </option>
+
+            <option value="@PaymentStatus.Pending">
+                Đang chờ
+            </option>
+
+            <option value="@PaymentStatus.Successful">
+                Thành công
+            </option>
+
+            <option value="@PaymentStatus.Failed">
+                Thất bại
+            </option>
+
+            <option value="@PaymentStatus.Refunded">
+                Đã hoàn tiền
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <input asp-for="FromDate"
+               type="date"
+               class="form-control" />
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <input asp-for="ToDate"
+               type="date"
+               class="form-control" />
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <button type="submit"
+                class="btn btn-primary">
+
+            Lọc
+
+        </button>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+
+            Xóa lọc
+
+        </a>
+
+    </div>
+
+</form>
+
+
+<table class="table table-bordered table-hover">
+
+    <thead>
+        <tr>
+            <th>Mã đơn</th>
+            <th>Số tiền</th>
+            <th>Phương thức</th>
+            <th>Mã giao dịch</th>
+            <th>Trạng thái</th>
+            <th>Thời điểm</th>
+            <th>Chi tiết</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @if (Model.Payments.Count == 0)
+        {
+            <tr>
+                <td colspan="7"
+                    class="text-center text-muted">
+
+                    Chưa có giao dịch.
+
+                </td>
+            </tr>
+        }
+
+        @foreach (var payment in Model.Payments)
+        {
+            <tr>
+
+                <td>
+                    @payment.OrderCode
+                </td>
+
+                <td>
+                    @payment.Amount.ToString("N0") đ
+                </td>
+
+                <td>
+                    @payment.MethodText
+                </td>
+
+                <td>
+                    @(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)
+            </td>
+
+                <td>
+                    @payment.StatusText
+                </td>
+
+                <td>
+                    @payment.TransactionAt.ToString("dd/MM/yyyy HH:mm")
+                </td>
+
+                <td>
+
+                    <a asp-area="Management"
+                       asp-controller="Order"
+                       asp-action="Details"
+                       asp-route-id="@payment.OrderId">
+
+                        Xem đơn hàng
+
+                    </a>
+
+                </td>
+
+            </tr>
+                }
+
+    </tbody>
+</table>

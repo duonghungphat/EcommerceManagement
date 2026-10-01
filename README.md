@@ -30,21 +30,21 @@ Hệ thống quản lý bán hàng nội bộ.
 
 \- \[x] Thiết kế kiến trúc ASP.NET Core
 
-\- \[ ] Khởi tạo project
+\- \[x] Khởi tạo project
 
-\- \[ ] Authentication \& Authorization
+\- \[x] Authentication \& Authorization
 
-\- \[ ] Category Management
+\- \[x] Category Management
 
-\- \[ ] Product Management
+\- \[x] Product Management
 
-\- \[ ] Customer Management
+\- \[x] Customer Management
 
-\- \[ ] Order Management
+\- \[x] Order Management
 
-\- \[ ] Payment Management
+\- \[x] Payment Management
 
-\- \[ ] Dashboard
+\- \[x] Dashboard
 
-\- \[ ] Audit Log
+\- \[x] Audit Log
 

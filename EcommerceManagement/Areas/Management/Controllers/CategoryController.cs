@@ -2,6 +2,7 @@
 using EcommerceManagement.Service.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EcommerceManagement.Areas.Management.Controllers
 {
@@ -40,7 +41,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
             try
             {
-                await _categoryService.CreateAsync(model);
+                await _categoryService.CreateAsync(model, GetCurrentUserId(), GetIpAddress());
 
                 TempData["Success"] = "Thêm danh mục thành công.";
 
@@ -76,7 +77,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
             try
             {
-                await _categoryService.UpdateAsync(model);
+                await _categoryService.UpdateAsync(model, GetCurrentUserId(), GetIpAddress());
 
                 TempData["Success"] = "Cập nhật danh mục thành công.";
 
@@ -97,7 +98,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
         {
             try
             {
-                await _categoryService.DeleteAsync(id);
+                await _categoryService.DeleteAsync(id, GetCurrentUserId(), GetIpAddress());
 
                 TempData["Success"] = "Xóa danh mục thành công.";
             }
@@ -107,6 +108,16 @@ namespace EcommerceManagement.Areas.Management.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private int GetCurrentUserId()
+        {
+            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        }
+
+        private string GetIpAddress()
+        {
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
         }
     }
 }

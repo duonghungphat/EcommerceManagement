@@ -56,11 +56,6 @@
                     color: white;
                 }
 
-            .sidebar-menu .disabled-link {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
-
         .main-content {
             margin-left: 250px;
             min-height: 100vh;
@@ -88,6 +83,19 @@
 
 <body>
 
+    @{
+        string? roleName =
+        User.FindFirst(ClaimTypes.Role)?.Value;
+
+        string roleDisplayName = roleName switch
+        {
+            "Admin" => "Quản trị viên",
+            "Manager" => "Quản lý",
+            "Staff" => "Nhân viên",
+            _ => roleName ?? ""
+        };
+    }
+
     <!-- SIDEBAR -->
     <div class="sidebar">
 
@@ -102,39 +110,39 @@
             </div>
 
             <a asp-area="Management"
+               asp-controller="Dashboard"
+               asp-action="Index">
+                Tổng quan
+            </a>
+
+            <a asp-area="Management"
                asp-controller="Category"
                asp-action="Index">
-                📁 Danh mục
+                Danh mục
             </a>
 
             <a asp-area="Management"
                asp-controller="Product"
                asp-action="Index">
-                📦 Sản phẩm
+                Sản phẩm
             </a>
 
             <a asp-area="Management"
                asp-controller="Customer"
                asp-action="Index">
-                👥 Khách hàng
+                Khách hàng
             </a>
 
-            <a href="#"
-               class="disabled-link"
-               onclick="return false;">
-                🧾 Đơn hàng
-                <span class="badge bg-secondary float-end">
-                    Sắp làm
-                </span>
+            <a asp-area="Management"
+               asp-controller="Order"
+               asp-action="Index">
+                Đơn hàng
             </a>
 
-            <a href="#"
-               class="disabled-link"
-               onclick="return false;">
-                💳 Thanh toán
-                <span class="badge bg-secondary float-end">
-                    Sắp làm
-                </span>
+            <a asp-area="Management"
+               asp-controller="Payment"
+               asp-action="Index">
+                Thanh toán
             </a>
 
             @if (User.IsInRole("Admin"))
@@ -146,22 +154,29 @@
                 <a asp-area="Management"
                    asp-controller="User"
                    asp-action="Index">
-                    👤 Tài khoản
+                    Tài khoản
                 </a>
 
-                <a href="#"
-                   class="disabled-link"
-                   onclick="return false;">
-                    📜 Nhật ký hệ thống
-                    <span class="badge bg-secondary float-end">
-                        Sắp làm
-                    </span>
+                <a asp-area="Management"
+                   asp-controller="AuditLog"
+                   asp-action="Index">
+                    Nhật ký hệ thống
                 </a>
             }
 
-        </div>
-    </div>
+            <div class="text-secondary small px-3 mt-4 mb-2">
+                TÀI KHOẢN
+            </div>
 
+            <a asp-area=""
+               asp-controller="Account"
+               asp-action="ChangePassword">
+                Đổi mật khẩu
+            </a>
+
+        </div>
+
+    </div>
 
     <!-- MAIN CONTENT -->
     <div class="main-content">
@@ -188,7 +203,7 @@
                         </div>
 
                         <span class="badge bg-primary role-badge">
-                            @User.FindFirst(ClaimTypes.Role)?.Value
+                            @roleDisplayName
                         </span>
 
                     </div>
@@ -210,31 +225,36 @@
 
         </div>
 
-
         <!-- PAGE CONTENT -->
         <div class="page-content">
 
             @if (TempData["Success"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show">
+                <div class="alert alert-success alert-dismissible fade show"
+                     role="alert">
+
                     @TempData["Success"]
 
                     <button type="button"
                             class="btn-close"
                             data-bs-dismiss="alert">
                     </button>
+
                 </div>
             }
 
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show">
+                <div class="alert alert-danger alert-dismissible fade show"
+                     role="alert">
+
                     @TempData["Error"]
 
                     <button type="button"
                             class="btn-close"
                             data-bs-dismiss="alert">
                     </button>
+
                 </div>
             }
 
@@ -246,7 +266,6 @@
 
     </div>
 
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -255,7 +274,9 @@
             asp-append-version="true">
     </script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync(
+    "Scripts",
+        required: false)
 
 </body>
 </html>

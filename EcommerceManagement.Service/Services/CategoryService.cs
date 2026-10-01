@@ -9,10 +9,12 @@ namespace EcommerceManagement.Service.Services
     public class CategoryService : ICategoryService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService _auditLogService;
 
-        public CategoryService(IUnitOfWork unitOfWork)
+        public CategoryService(IUnitOfWork unitOfWork, IAuditLogService auditLogService)
         {
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
         public async Task<List<CategoryViewModel>> GetAllAsync()
@@ -42,7 +44,7 @@ namespace EcommerceManagement.Service.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task CreateAsync(CategoryViewModel model)
+        public async Task CreateAsync(CategoryViewModel model, int actorUserId, string ipAddress)
         {
             if (string.IsNullOrWhiteSpace(model.Name))
                 throw new InvalidOperationException("Tên danh mục không được để trống.");
@@ -64,10 +66,12 @@ namespace EcommerceManagement.Service.Services
 
             await _unitOfWork.Categories.AddAsync(category);
 
+            await _auditLogService.RecordAsync("CreateCategory", "Category", category.Id == 0 ? null : category.Id, $"Thêm danh mục: {category.Name}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(CategoryViewModel model)
+        public async Task UpdateAsync(CategoryViewModel model, int actorUserId, string ipAddress)
         {
             var category = await _unitOfWork.Categories
                 .GetByIdAsync(model.Id);
@@ -90,10 +94,12 @@ namespace EcommerceManagement.Service.Services
             category.Name = name;
             category.Description = model.Description;
 
+            await _auditLogService.RecordAsync("UpdateCategory", "Category", category.Id, $"Cập nhật danh mục: {category.Name}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, int actorUserId, string ipAddress)
         {
             var category = await _unitOfWork.Categories
                 .GetByIdAsync(id);
@@ -110,6 +116,7 @@ namespace EcommerceManagement.Service.Services
 
             _unitOfWork.Categories.Delete(category);
 
+            await _auditLogService.RecordAsync("DeleteCategory", "Category", category.Id, $"Xóa danh mục: {category.Name}", ipAddress, actorUserId);
             await _unitOfWork.SaveChangesAsync();
         }
     }

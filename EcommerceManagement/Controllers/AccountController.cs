@@ -25,7 +25,7 @@ namespace EcommerceManagement.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("Index", "Category", new { area = "Management" });
+                return RedirectToAction("Index", "Dashboard", new { area = "Management" });
             }
 
             return View(new LoginViewModel());
@@ -80,7 +80,7 @@ namespace EcommerceManagement.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authenticationProperties);
 
-            return RedirectToAction("Index", "Category", new { area = "Management" });
+            return RedirectToAction("Index", "Dashboard", new { area = "Management" });
         }
 
         [HttpPost]
@@ -123,7 +123,7 @@ namespace EcommerceManagement.Controllers
 
                 TempData["Success"] = "Đổi mật khẩu thành công.";
 
-                return RedirectToAction("Index", "Category", new { area = "Management" });
+                return RedirectToAction("Index", "Dashboard", new { area = "Management" });
             }
             catch (InvalidOperationException ex)
             {

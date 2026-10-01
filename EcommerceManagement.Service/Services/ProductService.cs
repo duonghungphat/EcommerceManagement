@@ -9,10 +9,12 @@ namespace EcommerceManagement.Service.Services
     public class ProductService : IProductService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService _auditLogService;
 
-        public ProductService(IUnitOfWork unitOfWork)
+        public ProductService(IUnitOfWork unitOfWork, IAuditLogService auditLogService)
         {
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
         public async Task<List<ProductViewModel>> GetAllAsync()
@@ -46,6 +48,7 @@ namespace EcommerceManagement.Service.Services
                     SKU = p.SKU,
                     Price = p.Price,
                     StockQuantity = p.StockQuantity,
+                    OriginalStockQuantity = p.StockQuantity,
                     Status = p.Status,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
@@ -54,7 +57,7 @@ namespace EcommerceManagement.Service.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task CreateAsync(ProductViewModel model)
+        public async Task CreateAsync(ProductViewModel model, int actorUserId, string ipAddress)
         {
             if (string.IsNullOrWhiteSpace(model.Name))
                 throw new InvalidOperationException("Tên sản phẩm không được để trống.");
@@ -97,16 +100,23 @@ namespace EcommerceManagement.Service.Services
 
             await _unitOfWork.Products.AddAsync(product);
 
+            await _auditLogService.RecordAsync("CreateProduct", "Product", product.Id == 0 ? null : product.Id, $"Thêm sản phẩm: {product.Name} - SKU {product.SKU}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(ProductViewModel model)
+        public async Task UpdateAsync(ProductViewModel model, int actorUserId, string ipAddress)
         {
             var product = await _unitOfWork.Products
                 .GetByIdAsync(model.Id);
 
             if (product == null)
                 throw new InvalidOperationException("Sản phẩm không tồn tại.");
+
+            if (product.StockQuantity != model.OriginalStockQuantity)
+            {
+                throw new InvalidOperationException("Tồn kho sản phẩm đã thay đổi trong lúc bạn chỉnh sửa. Vui lòng tải lại trang và thử lại.");
+            }
 
             if (string.IsNullOrWhiteSpace(model.Name))
                 throw new InvalidOperationException("Tên sản phẩm không được để trống.");
@@ -144,10 +154,12 @@ namespace EcommerceManagement.Service.Services
             product.CategoryId = model.CategoryId;
             product.ImagePath = model.ImagePath;
 
+            await _auditLogService.RecordAsync("UpdateProduct", "Product", product.Id, $"Cập nhật sản phẩm: {product.Name}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, int actorUserId, string ipAddress)
         {
             var product = await _unitOfWork.Products
                 .GetByIdAsync(id);
@@ -163,6 +175,8 @@ namespace EcommerceManagement.Service.Services
                 throw new InvalidOperationException("Sản phẩm đã có đơn hàng. Hãy chuyển sang trạng thái ngừng bán.");
 
             _unitOfWork.Products.Delete(product);
+
+            await _auditLogService.RecordAsync("DeleteProduct", "Product", product.Id, $"Xóa sản phẩm: {product.Name}", ipAddress, actorUserId);
 
             await _unitOfWork.SaveChangesAsync();
         }

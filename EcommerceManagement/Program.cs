@@ -5,8 +5,14 @@ using EcommerceManagement.Data.UnitOfWork;
 using EcommerceManagement.Service.Interfaces;
 using EcommerceManagement.Service.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var viCulture = new CultureInfo("vi-VN");
+
+CultureInfo.DefaultThreadCurrentCulture = viCulture;
+CultureInfo.DefaultThreadCurrentUICulture = viCulture;
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -17,32 +23,33 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(connecti
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<IAuditLogService, AuditLogService>();
-builder.Services.AddScoped<IAccountService, AccountService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IProductService,ProductService>();
+builder.Services.AddScoped<ICategoryService,CategoryService>();
+builder.Services.AddScoped<ICustomerService,CustomerService>();
+builder.Services.AddScoped<IOrderService,OrderService>();
+builder.Services.AddScoped<IPaymentService,PaymentService>();
+builder.Services.AddScoped<IAuditLogService,AuditLogService>();
+builder.Services.AddScoped<IAccountService,AccountService>();
+builder.Services.AddScoped<IAuthService,AuthService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
-        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.AccessDeniedPath = "/Error/403";
     });
 
 var app = builder.Build();
 
 await DbSeeder.SeedRolesAsync(app.Services);
 
-await DbSeeder.SeedAdminAsync(app.Services, app.Configuration);
+await DbSeeder.SeedAdminAsync(app.Services,app.Configuration);
 
-// Configure the HTTP request pipeline.
+await DbSeeder.SeedSampleDataAsync(app.Services);
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error/500");
     app.UseHsts();
 }
 
@@ -50,6 +57,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 app.UseAuthentication();
 app.UseAuthorization();

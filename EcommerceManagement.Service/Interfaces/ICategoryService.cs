@@ -8,10 +8,10 @@ namespace EcommerceManagement.Service.Interfaces
 
         Task<CategoryViewModel?> GetByIdAsync(int id);
 
-        Task CreateAsync(CategoryViewModel model);
+        Task CreateAsync(CategoryViewModel model, int actorUserId, string ipAddress);
 
-        Task UpdateAsync(CategoryViewModel model);
+        Task UpdateAsync(CategoryViewModel model, int actorUserId, string ipAddress);
 
-        Task DeleteAsync(int id);
+        Task DeleteAsync(int id, int actorUserId, string ipAddress);
     }
 }

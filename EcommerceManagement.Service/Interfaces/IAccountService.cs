@@ -10,13 +10,13 @@ namespace EcommerceManagement.Service.Interfaces
 
         Task<List<RoleOptionViewModel>> GetRolesAsync();
 
-        Task CreateAsync(UserCreateViewModel model);
+        Task CreateAsync(UserCreateViewModel model, int actorUserId, string ipAddress);
 
         Task UpdateRoleAsync(int userId, int roleId, int actorUserId, string ipAddress);
 
-        Task SetActiveAsync(int userId, bool isActive);
+        Task SetActiveAsync(int id, bool isActive, int actorUserId, string ipAddress);
 
-        Task ResetPasswordAsync(int userId, string newPassword);
+        Task ResetPasswordAsync(int id, ResetPasswordViewModel model, int actorUserId, string ipAddress);
 
         Task ChangePasswordAsync(int userId, string oldPassword, string newPassword);
     }

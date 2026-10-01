@@ -32,11 +32,10 @@
                 <td>@order.OrderCode</td>
 
                 <td>
-                    @order.CreatedAt.ToString(
-                    "dd/MM/yyyy HH:mm")
-            </td>
+                    @order.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                </td>
 
-            <td>@order.Status</td>
+            <td>@order.StatusText</td>
 
             <td>
                 @order.TotalAmount.ToString("N0") đ

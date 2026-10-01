@@ -66,7 +66,7 @@ namespace EcommerceManagement.Service.Services
                 .ToListAsync();
         }
 
-        public async Task CreateAsync(UserCreateViewModel model)
+        public async Task CreateAsync(UserCreateViewModel model, int actorUserId, string ipAddress)
         {
             if (string.IsNullOrWhiteSpace(model.FullName))
                 throw new InvalidOperationException("Họ tên không được để trống.");
@@ -101,6 +101,8 @@ namespace EcommerceManagement.Service.Services
 
             await _unitOfWork.Users.AddAsync(user);
 
+            await _auditLogService.RecordAsync("CreateUser", "ApplicationUser", null, $"Tạo tài khoản {user.Email}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -130,9 +132,9 @@ namespace EcommerceManagement.Service.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task SetActiveAsync(int userId, bool isActive)
+        public async Task SetActiveAsync(int id, bool isActive, int actorUserId, string ipAddress)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            var user = await _unitOfWork.Users.GetByIdAsync(id);
 
             if (user == null)
                 throw new InvalidOperationException("Tài khoản không tồn tại.");
@@ -145,22 +147,26 @@ namespace EcommerceManagement.Service.Services
                 user.LockoutEnd = null;
             }
 
+            await _auditLogService.RecordAsync(isActive ? "UnlockUser" : "LockUser", "ApplicationUser", user.Id, isActive ? $"Mở khóa tài khoản {user.Email}" : $"Khóa tài khoản {user.Email}", ipAddress, actorUserId);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task ResetPasswordAsync(int userId, string newPassword)
+        public async Task ResetPasswordAsync(int id, ResetPasswordViewModel model, int actorUserId, string ipAddress)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            var user = await _unitOfWork.Users.GetByIdAsync(id);
 
             if (user == null)
                 throw new InvalidOperationException("Tài khoản không tồn tại.");
 
-            ValidatePassword(newPassword);
+            ValidatePassword(model.NewPassword);
 
-            user.PasswordHash = PasswordHelper.HashPassword(newPassword);
+            user.PasswordHash = PasswordHelper.HashPassword(model.NewPassword);
 
             user.FailedLoginAttempts = 0;
             user.LockoutEnd = null;
+
+            await _auditLogService.RecordAsync("ResetPassword", "ApplicationUser", user.Id, $"Đặt lại mật khẩu cho {user.Email}", ipAddress, actorUserId);
 
             await _unitOfWork.SaveChangesAsync();
         }

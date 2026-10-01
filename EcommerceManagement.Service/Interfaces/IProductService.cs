@@ -10,10 +10,10 @@ namespace EcommerceManagement.Service.Interfaces
 
         Task<ProductViewModel?> GetByIdAsync(int id);
 
-        Task CreateAsync(ProductViewModel model);
+        Task CreateAsync(ProductViewModel model, int actorUserId, string ipAddress);
 
-        Task UpdateAsync(ProductViewModel model);
+        Task UpdateAsync(ProductViewModel model, int actorUserId, string ipAddress);
 
-        Task DeleteAsync(int id);
+        Task DeleteAsync(int id, int actorUserId, string ipAddress);
     }
 }

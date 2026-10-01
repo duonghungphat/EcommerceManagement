@@ -15,5 +15,13 @@
         public bool IsActive { get; set; }
 
         public DateTime? LockoutEnd { get; set; }
+
+        public string RoleDisplayName => RoleName switch
+        {
+            "Admin" => "Quản trị viên",
+            "Manager" => "Quản lý",
+            "Staff" => "Nhân viên",
+            _ => RoleName
+        };
     }
 }

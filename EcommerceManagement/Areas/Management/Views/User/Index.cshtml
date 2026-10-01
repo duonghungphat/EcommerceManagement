@@ -28,13 +28,11 @@
             <tr>
                 <td>@item.FullName</td>
                 <td>@item.Email</td>
-                <td>@item.RoleName</td>
+                <td>@item.RoleDisplayName</td>
 
                 <td>
-                    @(item.IsActive
-                                    ? "Đang hoạt động"
-                                    : "Đã khóa")
-                                            </td>
+                    @(item.IsActive ? "Đang hoạt động" : "Đã khóa")
+                </td>
 
                 <td>
                     <a asp-action="EditRole"
@@ -65,9 +63,7 @@
 
                         <button type="submit"
                                 class="btn btn-link p-0">
-                            @(item.IsActive
-                                                    ? "Khóa"
-                                                    : "Mở khóa")
+                            @(item.IsActive ? "Khóa" : "Mở khóa")
                     </button>
                 </form>
             </td>

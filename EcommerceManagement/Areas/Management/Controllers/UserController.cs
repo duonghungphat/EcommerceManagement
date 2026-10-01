@@ -49,7 +49,11 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
             try
             {
-                await _accountService.CreateAsync(model);
+                int actorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+                await _accountService.CreateAsync(model, actorUserId, ipAddress);
 
                 TempData["Success"] = "Tạo tài khoản thành công.";
 
@@ -87,8 +91,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditRole(
-            UserRoleViewModel model)
+        public async Task<IActionResult> EditRole(UserRoleViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -125,7 +128,11 @@ namespace EcommerceManagement.Areas.Management.Controllers
         {
             try
             {
-                await _accountService.SetActiveAsync(id, isActive);
+                int actorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+                await _accountService.SetActiveAsync(id, isActive, actorUserId, ipAddress);
 
                 TempData["Success"] = isActive ? "Mở khóa tài khoản thành công." : "Khóa tài khoản thành công.";
             }
@@ -161,7 +168,11 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
             try
             {
-                await _accountService.ResetPasswordAsync(model.UserId, model.NewPassword);
+                int actorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+                await _accountService.ResetPasswordAsync(model.UserId, model, actorUserId, ipAddress);
 
                 TempData["Success"] = "Đặt lại mật khẩu thành công.";
 
