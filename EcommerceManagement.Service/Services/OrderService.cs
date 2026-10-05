@@ -283,7 +283,17 @@ namespace EcommerceManagement.Service.Services
             order.Status = newStatus;
             order.PaymentVersion++;
 
-            await _auditLogService.RecordAsync("UpdateOrderStatus", "Order", order.Id, $"Cập nhật đơn {order.OrderCode} sang trạng thái {newStatus}.", ipAddress, actorUserId);
+            string statusText = newStatus switch
+            {
+                OrderStatus.Pending => "Chờ xử lý",
+                OrderStatus.Confirmed => "Đã xác nhận",
+                OrderStatus.Shipping => "Đang giao",
+                OrderStatus.Completed => "Hoàn thành",
+                OrderStatus.Cancelled => "Đã hủy",
+                _ => "Không xác định"
+            };
+
+            await _auditLogService.RecordAsync("UpdateOrderStatus", "Order", order.Id, $"Cập nhật đơn {order.OrderCode} sang trạng thái {statusText}.", ipAddress, actorUserId);
 
             try
             {

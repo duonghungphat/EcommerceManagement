@@ -45,8 +45,6 @@ await DbSeeder.SeedRolesAsync(app.Services);
 
 await DbSeeder.SeedAdminAsync(app.Services,app.Configuration);
 
-await DbSeeder.SeedSampleDataAsync(app.Services);
-
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error/500");

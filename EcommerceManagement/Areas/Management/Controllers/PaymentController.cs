@@ -41,13 +41,23 @@ namespace EcommerceManagement.Areas.Management.Controllers
         public async Task<IActionResult> Create(PaymentCreateViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                var current = await _paymentService.GetCreateModelAsync(model.OrderId);
+
+                if (current == null)
+                    return NotFound();
+
+                model.OrderCode = current.OrderCode;
+                model.RemainingAmount = current.RemainingAmount;
+
                 return View(model);
+            }
 
             try
             {
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 await _paymentService.CreateAsync(model, userId, ip);
 
@@ -64,6 +74,14 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
+                var current = await _paymentService.GetCreateModelAsync(model.OrderId);
+
+                if (current == null)
+                    return NotFound();
+
+                model.OrderCode = current.OrderCode;
+                model.RemainingAmount = current.RemainingAmount;
+
                 return View(model);
             }
         }
@@ -77,7 +95,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 await _paymentService.RefundAsync(id, userId, ip);
 

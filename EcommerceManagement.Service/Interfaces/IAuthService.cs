@@ -4,9 +4,6 @@ namespace EcommerceManagement.Service.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthenticatedUser?> LoginAsync(
-            string? email,
-            string? password,
-            string ipAddress);
+        Task<LoginResult> LoginAsync(string email, string password, string ipAddress);
     }
 }

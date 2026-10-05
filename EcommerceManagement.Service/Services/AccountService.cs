@@ -113,6 +113,11 @@ namespace EcommerceManagement.Service.Services
             if (user == null)
                 throw new InvalidOperationException("Tài khoản không tồn tại.");
 
+            if (userId == actorUserId && user.RoleId != roleId)
+            {
+                throw new InvalidOperationException("Bạn không thể thay đổi vai trò của chính tài khoản đang đăng nhập.");
+            }
+
             var newRole = await _unitOfWork.Roles.GetByIdAsync(roleId);
 
             if (newRole == null)
@@ -123,33 +128,43 @@ namespace EcommerceManagement.Service.Services
 
             var oldRole = await _unitOfWork.Roles.GetByIdAsync(user.RoleId);
 
-            string oldRoleName = oldRole?.Name ?? "Không xác định";
+            string oldRoleName = GetRoleDisplayName(oldRole?.Name);
+            string newRoleName = GetRoleDisplayName(newRole.Name);
 
             user.RoleId = roleId;
 
-            await _auditLogService.RecordAsync("RoleChanged", "ApplicationUser", user.Id, $"Thay đổi vai trò từ {oldRoleName} sang {newRole.Name}.", ipAddress, actorUserId);
+            await _auditLogService.RecordAsync("RoleChanged", "ApplicationUser", user.Id, $"Thay đổi vai trò từ {oldRoleName} sang {newRoleName}.", ipAddress, actorUserId);
 
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task SetActiveAsync(int id, bool isActive, int actorUserId, string ipAddress)
+        public async Task<bool> ToggleActiveAsync(int id, int actorUserId, string ipAddress)
         {
             var user = await _unitOfWork.Users.GetByIdAsync(id);
 
             if (user == null)
                 throw new InvalidOperationException("Tài khoản không tồn tại.");
 
-            user.IsActive = isActive;
+            bool newIsActive = !user.IsActive;
 
-            if (isActive)
+            if (id == actorUserId && !newIsActive)
+            {
+                throw new InvalidOperationException("Bạn không thể khóa chính tài khoản đang đăng nhập.");
+            }
+
+            user.IsActive = newIsActive;
+
+            if (newIsActive)
             {
                 user.FailedLoginAttempts = 0;
                 user.LockoutEnd = null;
             }
 
-            await _auditLogService.RecordAsync(isActive ? "UnlockUser" : "LockUser", "ApplicationUser", user.Id, isActive ? $"Mở khóa tài khoản {user.Email}" : $"Khóa tài khoản {user.Email}", ipAddress, actorUserId);
+            await _auditLogService.RecordAsync(newIsActive ? "UnlockUser" : "LockUser", "ApplicationUser", user.Id, newIsActive ? $"Mở khóa tài khoản {user.Email}" : $"Khóa tài khoản {user.Email}", ipAddress, actorUserId);
 
             await _unitOfWork.SaveChangesAsync();
+
+            return newIsActive;
         }
 
         public async Task ResetPasswordAsync(int id, ResetPasswordViewModel model, int actorUserId, string ipAddress)
@@ -158,6 +173,11 @@ namespace EcommerceManagement.Service.Services
 
             if (user == null)
                 throw new InvalidOperationException("Tài khoản không tồn tại.");
+
+            if (id == actorUserId)
+            {
+                throw new InvalidOperationException("Bạn không thể đặt lại mật khẩu của chính mình. Vui lòng sử dụng chức năng Đổi mật khẩu.");
+            }
 
             ValidatePassword(model.NewPassword);
 
@@ -196,6 +216,16 @@ namespace EcommerceManagement.Service.Services
             {
                 throw new InvalidOperationException("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.");
             }
+        }
+        private static string GetRoleDisplayName(string? roleName)
+        {
+            return roleName switch
+            {
+                "Admin" => "Quản trị viên",
+                "Manager" => "Quản lý",
+                "Staff" => "Nhân viên",
+                _ => "Không xác định"
+            };
         }
     }
 }

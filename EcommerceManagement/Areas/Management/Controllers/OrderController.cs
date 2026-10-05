@@ -63,7 +63,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 int orderId = await _orderService.CreateAsync(model, userId, ip);
 
@@ -89,7 +89,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 await _orderService.UpdateStatusAsync(id, status, userId, ip);
 
@@ -112,7 +112,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 await _orderService.CancelAsync(id, userId, ip);
 

@@ -14,7 +14,7 @@ namespace EcommerceManagement.Service.Interfaces
 
         Task UpdateRoleAsync(int userId, int roleId, int actorUserId, string ipAddress);
 
-        Task SetActiveAsync(int id, bool isActive, int actorUserId, string ipAddress);
+        Task<bool> ToggleActiveAsync(int id, int actorUserId, string ipAddress);
 
         Task ResetPasswordAsync(int id, ResetPasswordViewModel model, int actorUserId, string ipAddress);
 

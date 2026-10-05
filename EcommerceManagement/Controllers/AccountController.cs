@@ -1,9 +1,12 @@
-﻿using EcommerceManagement.Core.ViewModels;
+﻿using EcommerceManagement.Core.Enums;
+using EcommerceManagement.Core.ViewModels;
+using EcommerceManagement.Service.DTOs;
 using EcommerceManagement.Service.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MySqlX.XDevAPI.Common;
 using System.Security.Claims;
 
 namespace EcommerceManagement.Controllers
@@ -41,16 +44,46 @@ namespace EcommerceManagement.Controllers
                 return View(model);
             }
 
-            string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
-            var user = await _authService.LoginAsync(model.Email, model.Password, ipAddress);
+            var result = await _authService.LoginAsync(model.Email, model.Password, ipAddress);
 
-            if (user == null)
+            if (result.Status == LoginStatus.InvalidCredentials)
             {
                 ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không đúng.");
 
                 return View(model);
             }
+
+            if (result.Status == LoginStatus.Inactive)
+            {
+                ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+
+                return View(model);
+            }
+
+            if (result.Status == LoginStatus.TemporarilyLocked)
+            {
+                int remainingMinutes = 5;
+
+                if (result.LockoutEnd.HasValue)
+                {
+                    remainingMinutes = Math.Max(1, (int)Math.Ceiling((result.LockoutEnd.Value - DateTime.Now).TotalMinutes));
+                }
+
+                ModelState.AddModelError(string.Empty, $"Tài khoản đang bị khóa tạm thời. Vui lòng thử lại sau khoảng {remainingMinutes} phút.");
+
+                return View(model);
+            }
+
+            if (result.Status != LoginStatus.Success || result.User == null)
+            {
+                ModelState.AddModelError(string.Empty, "Không thể đăng nhập. Vui lòng thử lại.");
+
+                return View(model);
+            }
+
+            var user = result.User;
 
             var claims = new List<Claim>
             {

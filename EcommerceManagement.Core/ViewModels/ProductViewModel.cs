@@ -17,8 +17,8 @@ namespace EcommerceManagement.Core.ViewModels
         [Display(Name = "Mã SKU")]
         public string SKU { get; set; } = string.Empty;
 
-        [Range(typeof(decimal), "0.01", "9999999999999999", ErrorMessage = "Giá sản phẩm phải lớn hơn 0.")]
-        [Display(Name = "Giá bán")]
+        [Range(typeof(decimal), "0.01", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "Giá sản phẩm phải lớn hơn 0.")]
+        [Display(Name = "Giá sản phẩm")]
         public decimal Price { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "Số lượng tồn kho không được âm.")]

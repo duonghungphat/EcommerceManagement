@@ -51,7 +51,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 int actorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 await _accountService.CreateAsync(model, actorUserId, ipAddress);
 
@@ -104,7 +104,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 int actorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 await _accountService.UpdateRoleAsync(model.Id, model.RoleId, actorUserId, ipAddress);
 
@@ -124,15 +124,15 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleActive(int id, bool isActive)
+        public async Task<IActionResult> ToggleActive(int id)
         {
             try
             {
                 int actorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
-                await _accountService.SetActiveAsync(id, isActive, actorUserId, ipAddress);
+                bool isActive = await _accountService.ToggleActiveAsync( id, actorUserId, ipAddress);
 
                 TempData["Success"] = isActive ? "Mở khóa tài khoản thành công." : "Khóa tài khoản thành công.";
             }
@@ -170,7 +170,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
             {
                 int actorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
 
                 await _accountService.ResetPasswordAsync(model.UserId, model, actorUserId, ipAddress);
 

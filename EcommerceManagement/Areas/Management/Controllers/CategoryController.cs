@@ -117,7 +117,7 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
         private string GetIpAddress()
         {
-            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Không xác định";
         }
     }
 }

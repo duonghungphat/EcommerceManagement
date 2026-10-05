@@ -112,6 +112,16 @@ namespace EcommerceManagement.Service.Services
             if (model.Amount <= 0)
                 throw new InvalidOperationException("Số tiền phải lớn hơn 0.");
 
+            if (!Enum.IsDefined(typeof(PaymentMethod), model.PaymentMethod))
+            {
+                throw new InvalidOperationException("Phương thức thanh toán không hợp lệ.");
+            }
+
+            if (model.Status != PaymentStatus.Successful && model.Status != PaymentStatus.Pending && model.Status != PaymentStatus.Failed)
+            {
+                throw new InvalidOperationException("Trạng thái thanh toán không hợp lệ.");
+            }
+
             decimal paidAmount = await _unitOfWork.Payments
                 .BuildQuery(p => p.OrderId == order.Id && p.Status == PaymentStatus.Successful)
                 .SumAsync(p => (decimal?)p.Amount) ?? 0m;
@@ -126,11 +136,6 @@ namespace EcommerceManagement.Service.Services
             if (model.Amount > remaining)
             {
                 throw new InvalidOperationException($"Số tiền vượt quá công nợ còn lại: {remaining:N0} đ.");
-            }
-
-            if (model.Status == PaymentStatus.Refunded)
-            {
-                throw new InvalidOperationException("Không thể tạo trực tiếp giao dịch hoàn tiền.");
             }
 
             var payment = new Payment

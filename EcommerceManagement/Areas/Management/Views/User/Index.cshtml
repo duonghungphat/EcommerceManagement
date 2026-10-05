@@ -1,7 +1,9 @@
-﻿@model IEnumerable<UserListItemViewModel>
+﻿@using System.Security.Claims
+@model IEnumerable<UserListItemViewModel>
 
 @{
     ViewData["Title"] = "Tài khoản";
+    int currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }
 
 <h2>Danh sách tài khoản</h2>
@@ -35,39 +37,44 @@
                 </td>
 
                 <td>
-                    <a asp-action="EditRole"
-                       asp-route-id="@item.Id">
-                        Đổi vai trò
-                    </a>
+                    @if (item.Id != currentUserId)
+                    {
+                        <a asp-action="EditRole"
+                           asp-route-id="@item.Id">
+                            Đổi vai trò
+                        </a>
 
-                    |
+                        <span> | </span>
 
-                    <a asp-action="ResetPassword"
-                       asp-route-id="@item.Id">
-                        Đặt lại mật khẩu
-                    </a>
+                        <a asp-action="ResetPassword"
+                           asp-route-id="@item.Id">
+                            Đặt lại mật khẩu
+                        </a>
 
-                    |
+                        <span> | </span>
 
-                    <form asp-action="ToggleActive"
-                          method="post"
-                          class="d-inline">
+                        <form asp-action="ToggleActive"
+                              method="post"
+                              class="d-inline">
 
-                        <input type="hidden"
-                               name="id"
-                               value="@item.Id" />
+                            <input type="hidden"
+                                   name="id"
+                                   value="@item.Id" />
 
-                        <input type="hidden"
-                               name="isActive"
-                               value="@(!item.IsActive)" />
-
-                        <button type="submit"
-                                class="btn btn-link p-0">
-                            @(item.IsActive ? "Khóa" : "Mở khóa")
-                    </button>
-                </form>
-            </td>
-        </tr>
-                }
+                            <button type="submit"
+                                    class="btn btn-link p-0">
+                                @(item.IsActive ? "Khóa" : "Mở khóa")
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">
+                            Tài khoản hiện tại
+                        </span>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

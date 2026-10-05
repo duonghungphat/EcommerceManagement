@@ -554,7 +554,7 @@ $.validator.addMethod( "creditcardtypes", function( value, element, param ) {
 	if ( param.jcb ) {
 		validTypes |= 0x0040;
 	}
-	if ( param.unknown ) {
+	if ( param.khongxacdinh ) {
 		validTypes |= 0x0080;
 	}
 	if ( param.all ) {
@@ -584,7 +584,7 @@ $.validator.addMethod( "creditcardtypes", function( value, element, param ) {
 	if ( validTypes & 0x0040 && /^(2131|1800)/.test( value ) ) { // Jcb
 		return value.length === 15;
 	}
-	if ( validTypes & 0x0080 ) { // Unknown
+	if ( validTypes & 0x0080 ) { // unknown
 		return true;
 	}
 	return false;

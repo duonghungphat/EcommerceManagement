@@ -11,7 +11,7 @@ namespace EcommerceManagement.Core.ViewModels
 
         public decimal RemainingAmount { get; set; }
 
-        [Range(typeof(decimal), "0.01", "999999999999", ErrorMessage = "Số tiền phải lớn hơn 0.")]
+        [Range(typeof(decimal), "0.01", "999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "Số tiền phải lớn hơn 0.")]
         public decimal Amount { get; set; }
 
         public PaymentMethod PaymentMethod { get; set; }

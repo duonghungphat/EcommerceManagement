@@ -1,4 +1,5 @@
-﻿using EcommerceManagement.Core.Models;
+﻿using EcommerceManagement.Core.Enums;
+using EcommerceManagement.Core.Models;
 using EcommerceManagement.Data.UnitOfWork;
 using EcommerceManagement.Service.DTOs;
 using EcommerceManagement.Service.Interfaces;
@@ -18,9 +19,9 @@ namespace EcommerceManagement.Service.Services
             _auditLogService = auditLogService;
         }
 
-        public async Task<AuthenticatedUser?> LoginAsync(string? email, string? password, string ipAddress)
+        public async Task<LoginResult> LoginAsync(string email, string password, string ipAddress)
         {
-            string normalizedEmail = email?.Trim().ToLowerInvariant() ?? string.Empty;
+            string normalizedEmail = email.Trim().ToLowerInvariant();
 
             // 1. Tìm tài khoản theo email
             var foundUser = await _unitOfWork.Users
@@ -28,21 +29,51 @@ namespace EcommerceManagement.Service.Services
                 .FirstOrDefaultAsync();
 
             if (foundUser == null)
-                return await RejectLoginAsync(null, ipAddress);
+            {
+                await RejectLoginAsync(null, ipAddress);
+
+                return new LoginResult
+                {
+                    Status = LoginStatus.InvalidCredentials
+                };
+            }
 
             // Lấy entity có tracking để cập nhật số lần đăng nhập sai
             var user = await _unitOfWork.Users
                 .GetByIdAsync(foundUser.Id);
 
-            if (user == null || !user.IsActive)
-                return await RejectLoginAsync(user, ipAddress);
+            if (user == null)
+            {
+                await RejectLoginAsync(null, ipAddress);
+
+                return new LoginResult
+                {
+                    Status = LoginStatus.InvalidCredentials
+                };
+            }
+
+            if (!user.IsActive)
+            {
+                await RejectLoginAsync(user, ipAddress);
+
+                return new LoginResult
+                {
+                    Status = LoginStatus.Inactive
+                };
+            }
 
             DateTime now = DateTime.Now;
 
             // 2. Tài khoản còn trong thời gian khóa tạm
-            if (user.LockoutEnd.HasValue &&  user.LockoutEnd.Value > now)
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > now)
             {
-                return await RejectLoginAsync(user, ipAddress);
+                await RejectLoginAsync(user, ipAddress);
+
+                return new LoginResult
+                {
+                    Status = LoginStatus.TemporarilyLocked,
+                    LockoutEnd = user.LockoutEnd
+                };
             }
 
             // 3. Nếu đã hết thời gian khóa, cho phép thử lại
@@ -53,7 +84,7 @@ namespace EcommerceManagement.Service.Services
             }
 
             // 4. Kiểm tra mật khẩu
-            bool passwordIsCorrect = !string.IsNullOrEmpty(password) && PasswordHelper.VerifyPassword(password, user.PasswordHash);
+            bool passwordIsCorrect = PasswordHelper.VerifyPassword(password, user.PasswordHash);
 
             if (!passwordIsCorrect)
             {
@@ -62,9 +93,22 @@ namespace EcommerceManagement.Service.Services
                 if (user.FailedLoginAttempts >= 5)
                 {
                     user.LockoutEnd = now.AddMinutes(5);
+
+                    await RejectLoginAsync(user, ipAddress);
+
+                    return new LoginResult
+                    {
+                        Status = LoginStatus.TemporarilyLocked,
+                        LockoutEnd = user.LockoutEnd
+                    };
                 }
 
-                return await RejectLoginAsync(user, ipAddress);
+                await RejectLoginAsync(user, ipAddress);
+
+                return new LoginResult
+                {
+                    Status = LoginStatus.InvalidCredentials
+                };
             }
 
             // 5. Đăng nhập thành công
@@ -81,22 +125,26 @@ namespace EcommerceManagement.Service.Services
 
             await _unitOfWork.SaveChangesAsync();
 
-            return new AuthenticatedUser
+            return new LoginResult
             {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                RoleName = role.Name
+                Status = LoginStatus.Success,
+
+                User = new AuthenticatedUser
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    RoleName = role.Name
+                }
             };
         }
 
-        private async Task<AuthenticatedUser?> RejectLoginAsync(ApplicationUser? user, string ipAddress)
+        private async Task RejectLoginAsync(ApplicationUser? user, string ipAddress)
         {
             await _auditLogService.RecordAsync("LoginFailed", "ApplicationUser", user?.Id, "Đăng nhập thất bại.", ipAddress, user?.Id);
 
             await _unitOfWork.SaveChangesAsync();
 
-            return null;
         }
     }
 }

@@ -6,26 +6,14 @@
 
 <h2>Tạo đơn hàng</h2>
 
-<form asp-action="Create"
-      method="post">
-
-    <div asp-validation-summary="ModelOnly"
-         class="text-danger mb-3">
-    </div>
+<form id="orderForm" asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
     <div class="mb-3">
+        <label asp-for="CustomerId" class="form-label">Khách hàng</label>
 
-        <label asp-for="CustomerId"
-               class="form-label">
-            Khách hàng
-        </label>
-
-        <select asp-for="CustomerId"
-                class="form-select">
-
-            <option value="">
-                -- Chọn khách hàng --
-            </option>
+        <select asp-for="CustomerId" class="form-select">
+            <option value="">-- Chọn khách hàng --</option>
 
             @foreach (var customer in Model.Customers)
             {
@@ -33,209 +21,110 @@
                     @customer.FullName - @customer.PhoneNumber
                 </option>
             }
-
         </select>
 
-        <span asp-validation-for="CustomerId"
-              class="text-danger">
-        </span>
-
+        <span asp-validation-for="CustomerId" class="text-danger"></span>
     </div>
-
 
     <div class="mb-3">
-
-        <label asp-for="Note"
-               class="form-label">
-            Ghi chú
-        </label>
-
-        <textarea asp-for="Note"
-                  class="form-control"
-                  rows="3">
-        </textarea>
-
-        <span asp-validation-for="Note"
-              class="text-danger">
-        </span>
-
+        <label asp-for="Note" class="form-label">Ghi chú</label>
+        <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Note" class="text-danger"></span>
     </div>
-
 
     <hr />
 
-    <div class="d-flex justify-content-between mb-2">
-
+    <div class="d-flex justify-content-between align-items-center mb-2">
         <h4>Sản phẩm</h4>
 
-        <button type="button"
-                id="addProductButton"
-                class="btn btn-success">
-
+        <button type="button" id="addProductButton" class="btn btn-success">
             Thêm dòng sản phẩm
-
         </button>
-
     </div>
 
-
     <div id="orderItems">
-
         @for (int i = 0; i < Model.Items.Count; i++)
         {
             <div class="order-item row g-2 mb-3">
-
                 <div class="col-md-5">
+                    <label class="form-label">Sản phẩm</label>
 
-                    <label class="form-label">
-                        Sản phẩm
-                    </label>
-
-                    <select name="Items[@i].ProductId"
+                    <select asp-for="Items[i].ProductId"
                             class="form-select product-select">
-
-                        <option value="">
-                            -- Chọn sản phẩm --
-                        </option>
+                        <option value="">-- Chọn sản phẩm --</option>
 
                         @foreach (var product in Model.Products)
                         {
-                            if (product.Id == Model.Items[i].ProductId)
-                            {
-                                <option value="@product.Id"
-                                        data-price="@product.Price"
-                                        data-stock="@product.StockQuantity"
-                                        selected>
-
-                                    @product.Name
-                                    - @product.Price.ToString("N0") đ
-                                    - Tồn: @product.StockQuantity
-
-                                </option>
-                            }
-                            else
-                            {
-                                <option value="@product.Id"
-                                        data-price="@product.Price"
-                                        data-stock="@product.StockQuantity">
-
-                                    @product.Name
-                                    - @product.Price.ToString("N0") đ
-                                    - Tồn: @product.StockQuantity
-
-                                </option>
-                            }
+                            <option value="@product.Id"
+                                    data-price="@product.Price"
+                                    data-stock="@product.StockQuantity">
+                                @product.Name - @product.Price.ToString("N0") đ - Tồn: @product.StockQuantity
+                            </option>
                         }
-
                     </select>
 
+                    <span asp-validation-for="Items[i].ProductId"
+                          class="text-danger product-error"></span>
                 </div>
 
-
                 <div class="col-md-2">
+                    <label class="form-label">Số lượng</label>
 
-                    <label class="form-label">
-                        Số lượng
-                    </label>
-
-                    <input name="Items[@i].Quantity"
+                    <input asp-for="Items[i].Quantity"
                            type="number"
                            min="1"
-                           value="@Model.Items[i].Quantity"
                            class="form-control quantity-input" />
 
+                    <span asp-validation-for="Items[i].Quantity"
+                          class="text-danger quantity-error"></span>
                 </div>
 
-
                 <div class="col-md-2">
-
-                    <label class="form-label">
-                        Đơn giá
-                    </label>
-
+                    <label class="form-label">Đơn giá</label>
                     <input type="text"
                            class="form-control unit-price"
                            readonly />
-
                 </div>
 
-
                 <div class="col-md-2">
-
-                    <label class="form-label">
-                        Thành tiền
-                    </label>
-
+                    <label class="form-label">Thành tiền</label>
                     <input type="text"
                            class="form-control line-total"
                            readonly />
-
                 </div>
-
 
                 <div class="col-md-1 d-flex align-items-end">
-
                     <button type="button"
                             class="btn btn-danger remove-item">
-
                         Xóa
-
                     </button>
-
                 </div>
-
             </div>
         }
-
     </div>
-
 
     <hr />
 
     <div class="text-end mb-3">
-
-        <strong>
-            Tổng tiền:
-        </strong>
-
-        <span id="orderTotal"
-              class="fs-5">
-
-            0 đ
-
-        </span>
-
+        <strong>Tổng tiền:</strong>
+        <span id="orderTotal" class="fs-5">0 đ</span>
     </div>
 
-
-    <button type="submit"
-            class="btn btn-primary">
-
+    <button type="submit" class="btn btn-primary">
         Tạo đơn hàng
-
     </button>
 
-    <a asp-action="Index"
-       class="btn btn-secondary">
-
+    <a asp-action="Index" class="btn btn-secondary">
         Quay lại
-
     </a>
-
 </form>
 
-
 @section Scripts {
-
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-
-        const orderItemsContainer =
-            document.getElementById("orderItems");
-
-        const addProductButton =
-            document.getElementById("addProductButton");
+        const orderItemsContainer = document.getElementById("orderItems");
+        const addProductButton = document.getElementById("addProductButton");
 
         const products = [
             @foreach (var product in Model.Products)
@@ -243,297 +132,239 @@
                     <text>
                     {
                         id: @product.Id,
-                        name: @Html.Raw(
-                                                System.Text.Json.JsonSerializer.Serialize(
-                                                        product.Name)),
-                price: @product.Price.ToString(
-                                        System.Globalization.CultureInfo.InvariantCulture),
-                stock: @product.StockQuantity
-            },
-            </text>
-                }
+                        name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(product.Name)),
+                        price: @product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        stock: @product.StockQuantity
+                    },
+                    </text>
+            }
         ];
 
-
         function formatMoney(value) {
-
-            return new Intl.NumberFormat(
-                "vi-VN"
-            ).format(value) + " đ";
+            return new Intl.NumberFormat("vi-VN").format(value) + " đ";
         }
 
-
         function createOptions() {
-
-            let html =
-                '<option value="">-- Chọn sản phẩm --</option>';
+            let html = '<option value="">-- Chọn sản phẩm --</option>';
 
             products.forEach(product => {
-
                 html += `
                     <option value="${product.id}"
                             data-price="${product.price}"
                             data-stock="${product.stock}">
-
-                        ${product.name}
-                        - ${formatMoney(product.price)}
-                        - Tồn: ${product.stock}
-
-                    </option>
-                `;
+                        ${product.name} - ${formatMoney(product.price)} - Tồn: ${product.stock}
+                    </option>`;
             });
 
             return html;
         }
 
+        function refreshValidation() {
+            const form = $("#orderForm");
 
-        function renumberItems() {
+            form.removeData("validator");
+            form.removeData("unobtrusiveValidation");
 
-            const rows =
-                document.querySelectorAll(".order-item");
-
-            rows.forEach((row, index) => {
-
-                const product =
-                    row.querySelector(".product-select");
-
-                const quantity =
-                    row.querySelector(".quantity-input");
-
-                product.name =
-                    `Items[${index}].ProductId`;
-
-                quantity.name =
-                    `Items[${index}].Quantity`;
-            });
+            $.validator.unobtrusive.parse(form);
         }
 
+        function renumberItems() {
+            const rows = document.querySelectorAll(".order-item");
+
+            rows.forEach((row, index) => {
+                const product = row.querySelector(".product-select");
+                const quantity = row.querySelector(".quantity-input");
+                const productError = row.querySelector(".product-error");
+                const quantityError = row.querySelector(".quantity-error");
+
+                const productName = `Items[${index}].ProductId`;
+                const quantityName = `Items[${index}].Quantity`;
+
+                product.name = productName;
+                product.id = `Items_${index}__ProductId`;
+
+                quantity.name = quantityName;
+                quantity.id = `Items_${index}__Quantity`;
+
+                if (productError) {
+                    productError.setAttribute("data-valmsg-for", productName);
+                }
+
+                if (quantityError) {
+                    quantityError.setAttribute("data-valmsg-for", quantityName);
+                }
+            });
+
+            refreshValidation();
+        }
 
         function updateRow(row) {
-
-            const productSelect =
-                row.querySelector(".product-select");
-
-            const quantityInput =
-                row.querySelector(".quantity-input");
-
-            const unitPriceInput =
-                row.querySelector(".unit-price");
-
-            const lineTotalInput =
-                row.querySelector(".line-total");
+            const productSelect = row.querySelector(".product-select");
+            const quantityInput = row.querySelector(".quantity-input");
+            const unitPriceInput = row.querySelector(".unit-price");
+            const lineTotalInput = row.querySelector(".line-total");
 
             const selectedOption =
-                productSelect.options[
-                    productSelect.selectedIndex
-                ];
+                productSelect.options[productSelect.selectedIndex];
 
-            const price =
-                parseFloat(
-                    selectedOption?.dataset.price || 0
-                );
+            const price = parseFloat(
+                selectedOption?.dataset.price || 0
+            );
 
-            const quantity =
-                parseInt(
-                    quantityInput.value || 0
-                );
+            const quantity = parseInt(
+                quantityInput.value || 0
+            );
 
-            unitPriceInput.value =
-                formatMoney(price);
-
-            lineTotalInput.value =
-                formatMoney(price * quantity);
+            unitPriceInput.value = formatMoney(price);
+            lineTotalInput.value = formatMoney(price * quantity);
 
             updateTotal();
         }
 
-
         function updateTotal() {
-
             let total = 0;
 
-            document
-                .querySelectorAll(".order-item")
-                .forEach(row => {
+            document.querySelectorAll(".order-item").forEach(row => {
+                const productSelect =
+                    row.querySelector(".product-select");
 
-                    const productSelect =
-                        row.querySelector(
-                            ".product-select"
-                        );
+                const quantityInput =
+                    row.querySelector(".quantity-input");
 
-                    const quantityInput =
-                        row.querySelector(
-                            ".quantity-input"
-                        );
+                const selectedOption =
+                    productSelect.options[productSelect.selectedIndex];
 
-                    const selectedOption =
-                        productSelect.options[
-                            productSelect.selectedIndex
-                        ];
+                const price = parseFloat(
+                    selectedOption?.dataset.price || 0
+                );
 
-                    const price =
-                        parseFloat(
-                            selectedOption?.dataset.price
-                            || 0
-                        );
+                const quantity = parseInt(
+                    quantityInput.value || 0
+                );
 
-                    const quantity =
-                        parseInt(
-                            quantityInput.value || 0
-                        );
+                total += price * quantity;
+            });
 
-                    total += price * quantity;
-                });
-
-            document.getElementById(
-                "orderTotal"
-            ).textContent = formatMoney(total);
+            document.getElementById("orderTotal").textContent =
+                formatMoney(total);
         }
 
-
         function bindRow(row) {
-
             const productSelect =
                 row.querySelector(".product-select");
 
             const quantityInput =
                 row.querySelector(".quantity-input");
 
-            productSelect.addEventListener(
-                "change",
-                () => updateRow(row)
-            );
+            const removeButton =
+                row.querySelector(".remove-item");
 
-            quantityInput.addEventListener(
-                "input",
-                () => updateRow(row)
-            );
+            productSelect.addEventListener("change", () => {
+                updateRow(row);
+            });
 
-            row
-                .querySelector(".remove-item")
-                .addEventListener("click", () => {
+            quantityInput.addEventListener("input", () => {
+                updateRow(row);
+            });
 
-                    const rows =
-                        document.querySelectorAll(
-                            ".order-item"
-                        );
+            removeButton.addEventListener("click", () => {
+                const rows =
+                    document.querySelectorAll(".order-item");
 
-                    if (rows.length <= 1) {
+                if (rows.length <= 1) {
+                    alert("Đơn hàng phải có ít nhất một dòng sản phẩm.");
+                    return;
+                }
 
-                        alert(
-                            "Đơn hàng phải có ít nhất một dòng sản phẩm."
-                        );
-
-                        return;
-                    }
-
-                    row.remove();
-
-                    renumberItems();
-
-                    updateTotal();
-                });
+                row.remove();
+                renumberItems();
+                updateTotal();
+            });
 
             updateRow(row);
         }
 
+        addProductButton.addEventListener("click", () => {
+            const index =
+                document.querySelectorAll(".order-item").length;
 
-        addProductButton.addEventListener(
-            "click",
-            () => {
+            const row = document.createElement("div");
 
-                const index =
-                    document.querySelectorAll(
-                        ".order-item"
-                    ).length;
+            row.className = "order-item row g-2 mb-3";
 
-                const row =
-                    document.createElement("div");
+            row.innerHTML = `
+                <div class="col-md-5">
+                    <label class="form-label">Sản phẩm</label>
 
-                row.className =
-                    "order-item row g-2 mb-3";
+                    <select name="Items[${index}].ProductId"
+                            id="Items_${index}__ProductId"
+                            class="form-select product-select"
+                            data-val="true"
+                            data-val-required="Vui lòng chọn sản phẩm."
+                            data-val-range="Vui lòng chọn sản phẩm."
+                            data-val-range-min="1"
+                            data-val-range-max="2147483647">
+                        ${createOptions()}
+                    </select>
 
-                row.innerHTML = `
+                    <span class="text-danger product-error field-validation-valid"
+                          data-valmsg-for="Items[${index}].ProductId"
+                          data-valmsg-replace="true"></span>
+                </div>
 
-                    <div class="col-md-5">
+                <div class="col-md-2">
+                    <label class="form-label">Số lượng</label>
 
-                        <label class="form-label">
-                            Sản phẩm
-                        </label>
+                    <input name="Items[${index}].Quantity"
+                           id="Items_${index}__Quantity"
+                           type="number"
+                           min="1"
+                           value="1"
+                           class="form-control quantity-input"
+                           data-val="true"
+                           data-val-required="Vui lòng nhập số lượng."
+                           data-val-range="Số lượng phải từ 1 trở lên."
+                           data-val-range-min="1"
+                           data-val-range-max="2147483647" />
 
-                        <select
-                            name="Items[${index}].ProductId"
-                            class="form-select product-select">
+                    <span class="text-danger quantity-error field-validation-valid"
+                          data-valmsg-for="Items[${index}].Quantity"
+                          data-valmsg-replace="true"></span>
+                </div>
 
-                            ${createOptions()}
+                <div class="col-md-2">
+                    <label class="form-label">Đơn giá</label>
 
-                        </select>
+                    <input type="text"
+                           class="form-control unit-price"
+                           readonly />
+                </div>
 
-                    </div>
+                <div class="col-md-2">
+                    <label class="form-label">Thành tiền</label>
 
-                    <div class="col-md-2">
+                    <input type="text"
+                           class="form-control line-total"
+                           readonly />
+                </div>
 
-                        <label class="form-label">
-                            Số lượng
-                        </label>
-
-                        <input
-                            name="Items[${index}].Quantity"
-                            type="number"
-                            min="1"
-                            value="1"
-                            class="form-control quantity-input" />
-
-                    </div>
-
-                    <div class="col-md-2">
-
-                        <label class="form-label">
-                            Đơn giá
-                        </label>
-
-                        <input
-                            type="text"
-                            class="form-control unit-price"
-                            readonly />
-
-                    </div>
-
-                    <div class="col-md-2">
-
-                        <label class="form-label">
-                            Thành tiền
-                        </label>
-
-                        <input
-                            type="text"
-                            class="form-control line-total"
-                            readonly />
-
-                    </div>
-
-                    <div class="col-md-1 d-flex align-items-end">
-
-                        <button
-                            type="button"
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button"
                             class="btn btn-danger remove-item">
+                        Xóa
+                    </button>
+                </div>`;
 
-                            Xóa
+            orderItemsContainer.appendChild(row);
 
-                        </button>
-
-                    </div>
-                `;
-
-                orderItemsContainer.appendChild(row);
-
-                bindRow(row);
-            });
-
+            bindRow(row);
+            refreshValidation();
+        });
 
         document
             .querySelectorAll(".order-item")
             .forEach(row => bindRow(row));
 
+        refreshValidation();
     </script>
 }
