@@ -9,6 +9,7 @@ namespace EcommerceManagement.Data.UnitOfWork
         private readonly AppDbContext _context;
 
         public IRepository<Product> Products { get; }
+        public IRepository<ProductVariant> ProductVariants { get; }
         public IRepository<Category> Categories { get; }
         public IRepository<Customer> Customers { get; }
         public IRepository<Order> Orders { get; }
@@ -23,6 +24,7 @@ namespace EcommerceManagement.Data.UnitOfWork
             _context = context;
 
             Products = new Repository<Product>(context);
+            ProductVariants = new Repository<ProductVariant>(context);
             Categories = new Repository<Category>(context);
             Customers = new Repository<Customer>(context);
             Orders = new Repository<Order>(context);

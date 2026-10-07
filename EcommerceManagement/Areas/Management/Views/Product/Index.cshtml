@@ -1,269 +1,196 @@
-﻿@model ProductListViewModel
+@model ProductListViewModel
 
 @{
     ViewData["Title"] = "Sản phẩm";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="page-heading mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <h3 class="mb-1">Danh sách sản phẩm</h3>
+            <p class="text-muted mb-0">Theo dõi sản phẩm, giá bán và tồn kho.</p>
+        </div>
 
-    <div>
-        <h2 class="mb-0">
-            Danh sách sản phẩm
-        </h2>
-
-        <small class="text-muted">
-            Quản lý sản phẩm và tồn kho
-        </small>
+        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+        {
+            <a asp-action="Create" class="btn btn-primary">Thêm sản phẩm</a>
+        }
     </div>
-
-    @if (User.IsInRole("Admin") ||
-        User.IsInRole("Manager"))
-    {
-        <a asp-action="Create"
-           class="btn btn-primary">
-            Thêm sản phẩm
-        </a>
-    }
 </div>
 
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end crud-filter">
+            <div class="col-md-5">
+                <input asp-for="SearchTerm" class="form-control" placeholder="Tìm theo tên hoặc SKU..." />
+            </div>
 
-<form method="get"
-      asp-action="Index"
-      class="row g-2 mb-4">
+            <div class="col-md-4">
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">-- Tất cả danh mục --</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+            </div>
 
-    <div class="col-md-5">
-
-        <input asp-for="SearchTerm"
-               class="form-control"
-               placeholder="Tìm theo tên hoặc SKU..." />
-
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="col-md-4">
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Tên</th>
+                    <th>SKU</th>
+                    <th>Danh mục</th>
+                    <th>Giá</th>
+                    <th>Tồn kho</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Products.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Không tìm thấy sản phẩm.</td>
+                    </tr>
+                }
 
-        <select asp-for="CategoryId"
-                class="form-select">
-
-            <option value="">
-                -- Tất cả danh mục --
-            </option>
-
-            @foreach (var category in Model.Categories)
-            {
-                <option value="@category.Id">
-                    @category.Name
-                </option>
-            }
-
-        </select>
-
-    </div>
-
-    <div class="col-md-3">
-
-        <button type="submit"
-                class="btn btn-primary">
-            Tìm kiếm
-        </button>
-
-        <a asp-action="Index"
-           class="btn btn-outline-secondary">
-            Xóa lọc
-        </a>
-
-    </div>
-
-</form>
-
-
-<div class="card border-0 shadow-sm">
-
-    <div class="card-body p-0">
-
-        <div class="table-responsive">
-
-            <table class="table table-hover align-middle mb-0">
-
-                <thead class="table-light">
+                @foreach (var item in Model.Products)
+                {
+                    string toggleMessage =
+                    item.Status == ProductStatus.Selling
+                    ? "Bạn có chắc muốn ngừng bán sản phẩm này?"
+                    : "Bạn có chắc muốn bật bán lại sản phẩm này?";
 
                     <tr>
-                        <th>Ảnh</th>
-                        <th>Tên</th>
-                        <th>SKU</th>
-                        <th>Danh mục</th>
-                        <th>Giá</th>
-                        <th>Tồn kho</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.ImagePath))
+                            {
+                                <img src="@item.ImagePath"
+                                     alt="@item.Name"
+                                     class="rounded border"
+                                     style="width:56px;height:56px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Chưa có ảnh</span>
+                            }
+                        </td>
 
-                </thead>
+                        <td class="fw-semibold">@item.Name</td>
+                        <td>@item.SKU</td>
+                        <td>@item.CategoryName</td>
+                        <td>@item.Price.ToString("N0") đ</td>
 
-                <tbody>
+                        <td>
+                            @if (item.StockQuantity <= 10)
+                            {
+                                <span class="badge bg-danger">@item.StockQuantity</span>
+                                <div class="small text-danger mt-1">Sắp hết hàng</div>
+                            }
+                            else
+                            {
+                                <span class="fw-semibold">@item.StockQuantity</span>
+                            }
+                        </td>
 
-                    @if (Model.Products.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="8"
-                                class="text-center text-muted py-4">
+                        <td>
+                            @if (item.Status == ProductStatus.Selling)
+                            {
+                                <span class="badge bg-success">Đang bán</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Ngừng bán</span>
+                            }
+                        </td>
 
-                                Không tìm thấy sản phẩm.
+                        <td>
+                            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                            {
+                                <div class="crud-actions">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Sửa</a>
 
-                            </td>
-                        </tr>
-                    }
+                                    <form asp-action="ToggleStatus"
+                                          asp-route-id="@item.Id"
+                                          method="post"
+                                          onsubmit="return confirm('@toggleMessage');">
 
-                    @foreach (var item in Model.Products)
-                    {
-                        <tr>
+                                        <input type="hidden"
+                                               name="searchTerm"
+                                               value="@Model.SearchTerm" />
 
-                            <td>
+                                        <input type="hidden"
+                                               name="categoryId"
+                                               value="@Model.CategoryId" />
 
-                                @if (!string.IsNullOrWhiteSpace(item.ImagePath))
-                                {
-                                    <img src="@item.ImagePath"
-                                         alt="@item.Name"
-                                         style="width:60px;
-                                                        height:60px;
-                                                        object-fit:cover;"
-                                         class="rounded border" />
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">
-                                        Chưa có ảnh
-                                    </span>
-                                }
+                                        <input type="hidden"
+                                               name="page"
+                                               value="@Model.Page" />
 
-                            </td>
-
-                            <td>
-                                <strong>@item.Name</strong>
-                            </td>
-
-                            <td>
-                                @item.SKU
-                            </td>
-
-                            <td>
-                                @item.CategoryName
-                            </td>
-
-                            <td>
-                                @item.Price.ToString("N0") đ
-                            </td>
-
-                            <td>
-
-                                @if (item.StockQuantity <= 10)
-                                {
-                                    <span class="badge bg-danger">
-                                        @item.StockQuantity
-                                    </span>
-
-                                    <div class="small text-danger">
-                                        Sắp hết hàng
-                                    </div>
-                                }
-                                else
-                                {
-                                    <span>
-                                        @item.StockQuantity
-                                    </span>
-                                }
-
-                            </td>
-
-                            <td>
-
-                                @if (item.Status == ProductStatus.Selling)
-                                {
-                                    <span class="badge bg-success">
-                                        Đang bán
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">
-                                        Ngừng bán
-                                    </span>
-                                }
-
-                            </td>
-
-                            <td>
-
-                                @if (User.IsInRole("Admin") ||
-                                                            User.IsInRole("Manager"))
-                                {
-                                    <a asp-action="Edit"
-                                       asp-route-id="@item.Id"
-                                       class="btn btn-warning btn-sm">
-                                        Sửa
-                                    </a>
+                                        @if (item.Status == ProductStatus.Selling)
+                                        {
+                                            <button type="submit"
+                                                    class="btn btn-secondary btn-sm">
+                                                Ngừng bán
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit"
+                                                    class="btn btn-success btn-sm">
+                                                Bật bán
+                                            </button>
+                                        }
+                                    </form>
 
                                     <form asp-action="Delete"
                                           asp-route-id="@item.Id"
                                           method="post"
-                                          class="d-inline"
                                           onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
-
-                                        <button type="submit"
-                                                class="btn btn-danger btn-sm">
-                                            Xóa
-                                        </button>
-
+                                        <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                                     </form>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        Chỉ xem
-                                    </span>
-                                }
-
-                            </td>
-
-                        </tr>
-                    }
-
-                </tbody>
-
-            </table>
-
-        </div>
-
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-end">
+                                    <span class="badge bg-light-secondary">Chỉ xem</span>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-
 </div>
-
 
 @if (Model.TotalPages > 1)
 {
     <nav class="mt-4">
-
         <ul class="pagination justify-content-center">
-
-            @for (int i = 1;
-                    i <= Model.TotalPages;
-                    i++)
+            @for (int i = 1; i <= Model.TotalPages; i++)
             {
                 <li class="page-item @(i == Model.Page ? "active" : "")">
-
                     <a class="page-link"
                        asp-action="Index"
                        asp-route-searchTerm="@Model.SearchTerm"
                        asp-route-categoryId="@Model.CategoryId"
-                       asp-route-page="@i">
-
-                        @i
-
-                    </a>
-
+                       asp-route-page="@i">@i</a>
                 </li>
             }
-
         </ul>
-
     </nav>
 }

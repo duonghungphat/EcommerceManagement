@@ -1,346 +1,273 @@
-﻿@using EcommerceManagement.Core.Enums
+@using EcommerceManagement.Core.Enums
 @model EcommerceManagement.Core.ViewModels.OrderDetailsViewModel
 
 @{
     ViewData["Title"] = "Chi tiết đơn hàng";
+
+    string statusClass = Model.Status switch
+    {
+        OrderStatus.Pending => "bg-warning",
+        OrderStatus.Confirmed => "bg-primary",
+        OrderStatus.Shipping => "bg-info",
+        OrderStatus.Completed => "bg-success",
+        OrderStatus.Cancelled => "bg-danger",
+        _ => "bg-secondary"
+    };
 }
 
-<h2>Chi tiết đơn hàng</h2>
+<div class="page-heading mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <h3 class="mb-1">Chi tiết đơn hàng</h3>
+            <p class="text-muted mb-0">@Model.OrderCode · @Model.CustomerName</p>
+        </div>
 
-<hr />
-
-<h5>Thông tin đơn hàng</h5>
-
-<table class="table table-bordered">
-
-    <tr>
-        <th>Mã đơn</th>
-        <td>@Model.OrderCode</td>
-    </tr>
-
-    <tr>
-        <th>Khách hàng</th>
-        <td>@Model.CustomerName</td>
-    </tr>
-
-    <tr>
-        <th>Email</th>
-        <td>@Model.CustomerEmail</td>
-    </tr>
-
-    <tr>
-        <th>Số điện thoại</th>
-        <td>@Model.CustomerPhone</td>
-    </tr>
-
-    <tr>
-        <th>Người tạo</th>
-        <td>@Model.CreatedByName</td>
-    </tr>
-
-    <tr>
-        <th>Ngày tạo</th>
-        <td>
-            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
-        </td>
-    </tr>
-
-    <tr>
-        <th>Trạng thái</th>
-        <td>@Model.StatusText</td>
-    </tr>
-
-    <tr>
-        <th>Ghi chú</th>
-        <td>
-            @(string.IsNullOrWhiteSpace(Model.Note) ? "Không có" : Model.Note)
-        </td>
-    </tr>
-
-</table>
-
-
-<h5>Sản phẩm</h5>
-
-<table class="table table-bordered">
-
-    <thead>
-        <tr>
-            <th>Sản phẩm</th>
-            <th>Số lượng</th>
-            <th>Đơn giá</th>
-            <th>Thành tiền</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        @foreach (var item in Model.Items)
-        {
-            <tr>
-                <td>@item.ProductName</td>
-
-                <td>@item.Quantity</td>
-
-                <td>
-                    @item.UnitPrice.ToString("N0") đ
-                </td>
-
-                <td>
-                    @item.LineTotal.ToString("N0") đ
-                </td>
-            </tr>
-        }
-
-    </tbody>
-
-</table>
-
-
-<div class="mb-4">
-
-    <p>
-        <strong>Tổng tiền đơn hàng:</strong>
-        @Model.TotalAmount.ToString("N0") đ
-    </p>
-
-    <p>
-        <strong>Đã thu ban đầu:</strong>
-        @Model.OriginalPaidAmount.ToString("N0") đ
-    </p>
-
-    <p>
-        <strong>Đã hoàn tiền:</strong>
-        @Model.RefundedAmount.ToString("N0") đ
-    </p>
-
-    <p>
-        <strong>Thực thu:</strong>
-        @Model.PaidAmount.ToString("N0") đ
-    </p>
-
-    <p>
-        <strong>Còn phải thu:</strong>
-        @Model.RemainingAmount.ToString("N0") đ
-    </p>
-
+        <div class="d-flex gap-2">
+            <span class="badge @statusClass align-self-center">@Model.StatusText</span>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </div>
+    </div>
 </div>
 
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">
+                <h4 class="mb-0">Thông tin đơn hàng</h4>
+            </div>
 
-@if (Model.Status != OrderStatus.Cancelled &&
-     Model.Status != OrderStatus.Completed)
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="detail-label">Mã đơn</div>
+                        <div class="detail-value">@Model.OrderCode</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="detail-label">Ngày tạo</div>
+                        <div class="detail-value">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="detail-label">Khách hàng</div>
+                        <div class="detail-value">@Model.CustomerName</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="detail-label">Người tạo</div>
+                        <div class="detail-value">@Model.CreatedByName</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">@Model.CustomerEmail</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="detail-label">Số điện thoại</div>
+                        <div class="detail-value">@Model.CustomerPhone</div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="detail-label">Ghi chú</div>
+                        <div class="detail-value">@(string.IsNullOrWhiteSpace(Model.Note) ? "Không có" : Model.Note)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header">
+                <h4 class="mb-0">Thanh toán</h4>
+            </div>
+
+            <div class="card-body">
+                <div class="payment-summary-row">
+                    <span>Tổng tiền</span>
+                    <strong>@Model.TotalAmount.ToString("N0") đ</strong>
+                </div>
+
+                <div class="payment-summary-row">
+                    <span>Đã thu ban đầu</span>
+                    <strong>@Model.OriginalPaidAmount.ToString("N0") đ</strong>
+                </div>
+
+                <div class="payment-summary-row">
+                    <span>Đã hoàn tiền</span>
+                    <strong class="text-danger">@Model.RefundedAmount.ToString("N0") đ</strong>
+                </div>
+
+                <div class="payment-summary-row">
+                    <span>Thực thu</span>
+                    <strong class="text-success">@Model.PaidAmount.ToString("N0") đ</strong>
+                </div>
+
+                <div class="payment-summary-row payment-summary-total">
+                    <span>Còn phải thu</span>
+                    <strong>@Model.RemainingAmount.ToString("N0") đ</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h4 class="mb-0">Sản phẩm trong đơn</h4>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.ProductName</td>
+                        <td class="text-center">@item.Quantity</td>
+                        <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                        <td class="text-end fw-semibold">@item.LineTotal.ToString("N0") đ</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.Status != OrderStatus.Cancelled && Model.Status != OrderStatus.Completed)
 {
-    <h5>Cập nhật trạng thái</h5>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Xử lý đơn hàng</h4>
+        </div>
 
-    @if (Model.Status == OrderStatus.Pending)
-    {
-        <form asp-action="UpdateStatus"
-              method="post"
-              class="d-inline">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                @if (Model.Status == OrderStatus.Pending)
+                {
+                    <form asp-action="UpdateStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="@OrderStatus.Confirmed" />
+                        <button type="submit" class="btn btn-primary">Xác nhận đơn</button>
+                    </form>
+                }
 
-            <input type="hidden"
-                   name="id"
-                   value="@Model.Id" />
+                @if (Model.Status == OrderStatus.Confirmed)
+                {
+                    <form asp-action="UpdateStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="@OrderStatus.Shipping" />
+                        <button type="submit" class="btn btn-primary">Chuyển sang đang giao</button>
+                    </form>
+                }
 
-            <input type="hidden"
-                   name="status"
-                   value="@OrderStatus.Confirmed" />
+                @if (Model.Status == OrderStatus.Shipping)
+                {
+                    <form asp-action="UpdateStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="@OrderStatus.Completed" />
+                        <button type="submit" class="btn btn-success">Hoàn thành đơn</button>
+                    </form>
+                }
 
-            <button type="submit"
-                    class="btn btn-primary">
-
-                Xác nhận đơn
-
-            </button>
-
-        </form>
-    }
-
-    @if (Model.Status == OrderStatus.Confirmed)
-    {
-        <form asp-action="UpdateStatus"
-              method="post"
-              class="d-inline">
-
-            <input type="hidden"
-                   name="id"
-                   value="@Model.Id" />
-
-            <input type="hidden"
-                   name="status"
-                   value="@OrderStatus.Shipping" />
-
-            <button type="submit"
-                    class="btn btn-primary">
-
-                Chuyển sang đang giao
-
-            </button>
-
-        </form>
-    }
-
-    @if (Model.Status == OrderStatus.Shipping)
-    {
-        <form asp-action="UpdateStatus"
-              method="post"
-              class="d-inline">
-
-            <input type="hidden"
-                   name="id"
-                   value="@Model.Id" />
-
-            <input type="hidden"
-                   name="status"
-                   value="@OrderStatus.Completed" />
-
-            <button type="submit"
-                    class="btn btn-success">
-
-                Hoàn thành đơn
-
-            </button>
-
-        </form>
-    }
-
-
-    @if (User.IsInRole("Admin") ||
-             User.IsInRole("Manager"))
-    {
-        <form asp-action="Cancel"
-              method="post"
-              class="d-inline"
-              onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
-
-            <input type="hidden"
-                   name="id"
-                   value="@Model.Id" />
-
-            <button type="submit"
-                    class="btn btn-danger">
-
-                Hủy đơn hàng
-
-            </button>
-
-        </form>
-    }
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    <form asp-action="Cancel"
+                          method="post"
+                          onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-danger">Hủy đơn hàng</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
 }
 
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1">Lịch sử thanh toán</h4>
+            <small class="text-muted">Các giao dịch đã ghi nhận cho đơn hàng.</small>
+        </div>
 
-<hr />
-
-<h5>Lịch sử thanh toán</h5>
-
-
-@if (Model.Status != OrderStatus.Cancelled &&
-     Model.RemainingAmount > 0)
-{
-    <a asp-area="Management"
-       asp-controller="Payment"
-       asp-action="Create"
-       asp-route-orderId="@Model.Id"
-       class="btn btn-primary mb-3">
-
-        Ghi nhận thanh toán
-
-    </a>
-}
-
-
-<table class="table table-bordered">
-
-    <thead>
-        <tr>
-            <th>Thời điểm</th>
-            <th>Số tiền</th>
-            <th>Phương thức</th>
-            <th>Mã giao dịch</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        @if (Model.Payments.Count == 0)
+        @if (Model.Status != OrderStatus.Cancelled && Model.RemainingAmount > 0)
         {
-            <tr>
-                <td colspan="6"
-                    class="text-center text-muted">
-
-                    Chưa có giao dịch thanh toán.
-
-                </td>
-            </tr>
+            <a asp-area="Management"
+               asp-controller="Payment"
+               asp-action="Create"
+               asp-route-orderId="@Model.Id"
+               class="btn btn-primary">
+                Ghi nhận thanh toán
+            </a>
         }
+    </div>
 
-        @foreach (var payment in Model.Payments)
-        {
-            <tr>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Thời điểm</th>
+                    <th class="text-end">Số tiền</th>
+                    <th>Phương thức</th>
+                    <th>Mã giao dịch</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Payments.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Chưa có giao dịch thanh toán.</td>
+                    </tr>
+                }
 
-                <td>
-                    @payment.TransactionAt.ToString("dd/MM/yyyy HH:mm")
-                </td>
-
-                <td>
-                    @payment.Amount.ToString("N0") đ
-                </td>
-
-                <td>
-                    @payment.MethodText
-                </td>
-
-                <td>
-                    @(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)
-                </td>
-
-                <td>
-                    @payment.StatusText
-                </td>
-
-                <td>
-
-                @if (payment.Status == PaymentStatus.Successful && (User.IsInRole("Admin") || User.IsInRole("Manager")))
+                @foreach (var payment in Model.Payments)
+                {
+                    string paymentClass = payment.Status switch
                     {
-                        <form asp-area="Management"
-                              asp-controller="Payment"
-                              asp-action="Refund"
-                              method="post"
-                              class="d-inline"
-                              onsubmit="return confirm('Bạn có chắc muốn hoàn tiền giao dịch này?');">
+                        PaymentStatus.Pending => "bg-warning",
+                        PaymentStatus.Successful => "bg-success",
+                        PaymentStatus.Failed => "bg-danger",
+                        PaymentStatus.Refunded => "bg-info",
+                        _ => "bg-secondary"
+                    };
 
-                            <input type="hidden"
-                                   name="id"
-                                   value="@payment.Id" />
-
-                            <input type="hidden"
-                                   name="orderId"
-                                   value="@Model.Id" />
-
-                            <button type="submit"
-                                    class="btn btn-sm btn-warning">
-
-                                Hoàn tiền
-
-                            </button>
-
-                        </form>
-                    }
-
-                </td>
-
-            </tr>
-        }
-
-    </tbody>
-</table>
-
-
-<a asp-action="Index"
-   class="btn btn-secondary">
-
-    Quay lại danh sách
-
-</a>
+                    <tr>
+                        <td>@payment.TransactionAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-end fw-semibold">@payment.Amount.ToString("N0") đ</td>
+                        <td>@payment.MethodText</td>
+                        <td>@(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)</td>
+                        <td><span class="badge @paymentClass">@payment.StatusText</span></td>
+                        <td>
+                            @if (payment.Status == PaymentStatus.Successful && (User.IsInRole("Admin") || User.IsInRole("Manager")))
+                            {
+                                <div class="crud-actions">
+                                    <form asp-area="Management"
+                                          asp-controller="Payment"
+                                          asp-action="Refund"
+                                          method="post"
+                                          onsubmit="return confirm('Bạn có chắc muốn hoàn tiền giao dịch này?');">
+                                        <input type="hidden" name="id" value="@payment.Id" />
+                                        <input type="hidden" name="orderId" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-warning btn-sm">Hoàn tiền</button>
+                                    </form>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

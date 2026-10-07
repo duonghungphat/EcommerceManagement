@@ -57,6 +57,51 @@ namespace EcommerceManagement.Areas.Management.Controllers
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuickCreate(CustomerViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value != null && x.Value.Errors.Count > 0)
+                    .ToDictionary(x => x.Key, x => x.Value!.Errors
+                            .Select(e => e.ErrorMessage)
+                            .ToArray());
+
+                return BadRequest(new
+                {
+                    success = false,
+                    errors
+                });
+            }
+
+            try
+            {
+                int customerId = await _customerService.CreateAsync(model, GetCurrentUserId(), GetIpAddress());
+
+                return Json(new
+                {
+                    success = true,
+
+                    customer = new
+                    {
+                        id = customerId,
+                        fullName = model.FullName.Trim(),
+                        phoneNumber = model.PhoneNumber.Trim()
+                    }
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {

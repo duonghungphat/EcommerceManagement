@@ -180,6 +180,30 @@ namespace EcommerceManagement.Areas.Management.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleStatus(int id, string? searchTerm, int? categoryId, int page = 1)
+        {
+            try
+            {
+                await _productService.ToggleStatusAsync(id, GetCurrentUserId(), GetIpAddress());
+
+                TempData["Success"] = "Đổi trạng thái sản phẩm thành công.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index), new
+            {
+                searchTerm,
+                categoryId,
+                page
+            });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             try

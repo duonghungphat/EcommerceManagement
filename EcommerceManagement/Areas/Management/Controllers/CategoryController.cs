@@ -1,7 +1,7 @@
 ﻿using EcommerceManagement.Core.ViewModels;
 using EcommerceManagement.Service.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace EcommerceManagement.Areas.Management.Controllers
@@ -26,9 +26,13 @@ namespace EcommerceManagement.Areas.Management.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Manager")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View(new CategoryViewModel());
+            var model = new CategoryViewModel();
+
+            await PopulateParentCategoriesAsync(model);
+
+            return View(model);
         }
 
         [HttpPost]
@@ -37,7 +41,11 @@ namespace EcommerceManagement.Areas.Management.Controllers
         public async Task<IActionResult> Create(CategoryViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                await PopulateParentCategoriesAsync(model);
+
                 return View(model);
+            }
 
             try
             {
@@ -50,6 +58,8 @@ namespace EcommerceManagement.Areas.Management.Controllers
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
+
+                await PopulateParentCategoriesAsync(model);
 
                 return View(model);
             }
@@ -64,6 +74,8 @@ namespace EcommerceManagement.Areas.Management.Controllers
             if (model == null)
                 return NotFound();
 
+            await PopulateParentCategoriesAsync(model, model.Id);
+
             return View(model);
         }
 
@@ -73,7 +85,11 @@ namespace EcommerceManagement.Areas.Management.Controllers
         public async Task<IActionResult> Edit(CategoryViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                await PopulateParentCategoriesAsync(model, model.Id);
+
                 return View(model);
+            }
 
             try
             {
@@ -86,6 +102,8 @@ namespace EcommerceManagement.Areas.Management.Controllers
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
+
+                await PopulateParentCategoriesAsync(model, model.Id);
 
                 return View(model);
             }
@@ -108,6 +126,16 @@ namespace EcommerceManagement.Areas.Management.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task PopulateParentCategoriesAsync(CategoryViewModel model, int? excludeCategoryId = null)
+        {
+            var categories = await _categoryService.GetAllAsync();
+
+            model.ParentCategories = categories
+                .Where(c => c.ParentCategoryId == null && c.Id != excludeCategoryId)
+                .OrderBy(c => c.Name)
+                .ToList();
         }
 
         private int GetCurrentUserId()

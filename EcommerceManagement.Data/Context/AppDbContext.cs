@@ -18,6 +18,7 @@ namespace EcommerceManagement.Data.Context
         public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+        public DbSet<ProductVariant> ProductVariants { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -62,6 +63,12 @@ namespace EcommerceManagement.Data.Context
             modelBuilder.Entity<Category>()
                 .Property(c => c.Description)
                 .HasMaxLength(500);
+
+            modelBuilder.Entity<Category>()
+                .HasOne(c => c.ParentCategory)
+                .WithMany(c => c.SubCategories)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict); 
 
             modelBuilder.Entity<Order>()
                 .HasIndex(o => o.OrderCode)
@@ -206,6 +213,33 @@ namespace EcommerceManagement.Data.Context
                 .IsRequired()
                 .HasMaxLength(100);
 
+            modelBuilder.Entity<ProductVariant>()
+                .Property(v => v.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<ProductVariant>()
+                .Property(v => v.SKU)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<ProductVariant>()
+                .HasIndex(v => v.SKU)
+                .IsUnique();
+
+            modelBuilder.Entity<ProductVariant>()
+                .Property(v => v.Price)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<ProductVariant>()
+                .Property(v => v.StockQuantity)
+                .IsConcurrencyToken();
+
+            modelBuilder.Entity<ProductVariant>()
+                .HasOne(v => v.Product)
+                .WithMany(p => p.Variants)
+                .HasForeignKey(v => v.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

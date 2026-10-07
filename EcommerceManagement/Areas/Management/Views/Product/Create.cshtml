@@ -1,102 +1,260 @@
-﻿@model ProductViewModel
+@model ProductViewModel
 
 @{
     ViewData["Title"] = "Thêm sản phẩm";
 }
 
-<h2>Thêm sản phẩm</h2>
+<div class="page-heading mb-4">
+    <h3 class="mb-1">Thêm sản phẩm</h3>
+    <p class="text-muted mb-0">Nhập thông tin chung và các biến thể của sản phẩm.</p>
+</div>
 
-<form asp-action="Create" method="post" enctype="multipart/form-data">
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" id="productForm">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
 
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
 
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
+                <div class="col-md-4">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<ProductStatus>()" class="form-select"></select>
+                </div>
 
-        <input asp-for="Name" class="form-control" />
+                <div class="col-md-6">
+                    <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="0">-- Chọn danh mục --</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                </div>
 
-        <span asp-validation-for="Name" class="text-danger"></span>
+                <div class="col-md-6">
+                    <label class="form-label">Ảnh sản phẩm</label>
+                    <input type="file" name="imageFile" accept=".jpg,.jpeg,.png" class="form-control" />
+                    <small class="text-muted">Chấp nhận JPG/PNG, tối đa 2MB.</small>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-1">Biến thể sản phẩm</h5>
+                    <p class="text-muted mb-0">Ví dụ: Xanh, Đỏ, Tím hoặc 16GB/512GB.</p>
+                </div>
+
+                <button type="button" class="btn btn-success btn-sm" id="addVariantButton">Thêm biến thể</button>
+            </div>
+
+            <div id="variantContainer">
+                @for (int i = 0; i < Model.Variants.Count; i++)
+                {
+                    <div class="variant-row border rounded p-3 mb-3">
+                        <input asp-for="Variants[i].Id" type="hidden" />
+
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Tên biến thể</label>
+                                <input asp-for="Variants[i].Name" class="form-control variant-name" placeholder="Ví dụ: Màu xanh" />
+                                <span asp-validation-for="Variants[i].Name" class="text-danger small variant-name-error"></span>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">SKU</label>
+                                <input asp-for="Variants[i].SKU" class="form-control variant-sku" placeholder="Ví dụ: IP14-BLUE" />
+                                <span asp-validation-for="Variants[i].SKU" class="text-danger small variant-sku-error"></span>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Giá</label>
+                                <input asp-for="Variants[i].Price" type="number" min="0.01" step="0.01" class="form-control variant-price" />
+                                <span asp-validation-for="Variants[i].Price" class="text-danger small variant-price-error"></span>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Tồn kho</label>
+                                <input asp-for="Variants[i].StockQuantity" type="number" min="0" class="form-control variant-stock" />
+                                <span asp-validation-for="Variants[i].StockQuantity" class="text-danger small variant-stock-error"></span>
+                            </div>
+
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-danger btn-sm remove-variant">Xóa biến thể</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Lưu</button>
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="SKU" class="form-label"></label>
-
-        <input asp-for="SKU" class="form-control" />
-
-        <span asp-validation-for="SKU" class="text-danger"></span>
-
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Price" class="form-label"></label>
-
-        <input asp-for="Price" class="form-control" />
-
-        <span asp-validation-for="Price" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="StockQuantity" class="form-label"></label>
-
-        <input asp-for="StockQuantity" class="form-control" />
-
-        <span asp-validation-for="StockQuantity" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label">Danh mục</label>
-
-        <select asp-for="CategoryId" class="form-select">
-
-            <option value="0">
-                -- Chọn danh mục --
-            </option>
-
-            @foreach (var category in Model.Categories)
-            {
-                <option value="@category.Id">
-                    @category.Name
-                </option>
-            }
-
-        </select>
-
-        <span asp-validation-for="CategoryId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Status" class="form-label">
-            Trạng thái
-        </label>
-
-        <select asp-for="Status" asp-items="Html.GetEnumSelectList<ProductStatus>()" class="form-select">
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">
-            Ảnh sản phẩm
-        </label>
-
-        <input type="file"
-               name="imageFile"
-               accept=".jpg,.jpeg,.png"
-               class="form-control" />
-
-        <small class="text-muted">
-            Chấp nhận JPG/PNG, tối đa 2MB.
-        </small>
-    </div>
-
-    <button type="submit" class="btn btn-primary">
-        Lưu
-    </button>
-
-    <a asp-action="Index" class="btn btn-secondary">
-        Quay lại
-    </a>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const variantContainer = document.getElementById("variantContainer");
+        const addVariantButton = document.getElementById("addVariantButton");
+
+        function refreshValidation() {
+            const form = $("#productForm");
+            form.removeData("validator");
+            form.removeData("unobtrusiveValidation");
+            $.validator.unobtrusive.parse(form);
+        }
+
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll(".variant-row");
+            rows.forEach(row => {
+                row.querySelector(".remove-variant").disabled = rows.length <= 1;
+            });
+        }
+
+        function renumberVariants() {
+            document.querySelectorAll(".variant-row").forEach((row, index) => {
+                const id = row.querySelector('input[type="hidden"]');
+                const name = row.querySelector(".variant-name");
+                const sku = row.querySelector(".variant-sku");
+                const price = row.querySelector(".variant-price");
+                const stock = row.querySelector(".variant-stock");
+
+                id.name = `Variants[${index}].Id`;
+                id.id = `Variants_${index}__Id`;
+
+                name.name = `Variants[${index}].Name`;
+                name.id = `Variants_${index}__Name`;
+
+                sku.name = `Variants[${index}].SKU`;
+                sku.id = `Variants_${index}__SKU`;
+
+                price.name = `Variants[${index}].Price`;
+                price.id = `Variants_${index}__Price`;
+
+                stock.name = `Variants[${index}].StockQuantity`;
+                stock.id = `Variants_${index}__StockQuantity`;
+
+                row.querySelector(".variant-name-error").setAttribute("data-valmsg-for", `Variants[${index}].Name`);
+                row.querySelector(".variant-sku-error").setAttribute("data-valmsg-for", `Variants[${index}].SKU`);
+                row.querySelector(".variant-price-error").setAttribute("data-valmsg-for", `Variants[${index}].Price`);
+                row.querySelector(".variant-stock-error").setAttribute("data-valmsg-for", `Variants[${index}].StockQuantity`);
+            });
+
+            updateRemoveButtons();
+            refreshValidation();
+        }
+
+        function bindRemoveButton(row) {
+            row.querySelector(".remove-variant").addEventListener("click", () => {
+                if (document.querySelectorAll(".variant-row").length <= 1) {
+                    alert("Sản phẩm phải có ít nhất một biến thể.");
+                    return;
+                }
+
+                row.remove();
+                renumberVariants();
+            });
+        }
+
+        addVariantButton.addEventListener("click", () => {
+            const index = document.querySelectorAll(".variant-row").length;
+            const row = document.createElement("div");
+
+            row.className = "variant-row border rounded p-3 mb-3";
+            row.innerHTML = `
+                <input type="hidden" name="Variants[${index}].Id" id="Variants_${index}__Id" value="0" />
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Tên biến thể</label>
+                        <input name="Variants[${index}].Name"
+                               id="Variants_${index}__Name"
+                               class="form-control variant-name"
+                               placeholder="Ví dụ: Màu xanh"
+                               data-val="true"
+                               data-val-required="Tên biến thể không được để trống."
+                               data-val-length="Tên biến thể tối đa 100 ký tự."
+                               data-val-length-max="100" />
+                        <span class="text-danger small variant-name-error field-validation-valid"
+                              data-valmsg-for="Variants[${index}].Name"
+                              data-valmsg-replace="true"></span>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">SKU</label>
+                        <input name="Variants[${index}].SKU"
+                               id="Variants_${index}__SKU"
+                               class="form-control variant-sku"
+                               placeholder="Ví dụ: IP14-BLUE"
+                               data-val="true"
+                               data-val-required="SKU không được để trống."
+                               data-val-length="SKU tối đa 100 ký tự."
+                               data-val-length-max="100" />
+                        <span class="text-danger small variant-sku-error field-validation-valid"
+                              data-valmsg-for="Variants[${index}].SKU"
+                              data-valmsg-replace="true"></span>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Giá</label>
+                        <input name="Variants[${index}].Price"
+                               id="Variants_${index}__Price"
+                               type="number"
+                               min="0.01"
+                               step="0.01"
+                               class="form-control variant-price"
+                               data-val="true"
+                               data-val-required="The Price field is required."
+                               data-val-range="Giá biến thể phải lớn hơn 0."
+                               data-val-range-min="0.01"
+                               data-val-range-max="9999999999999999" />
+                        <span class="text-danger small variant-price-error field-validation-valid"
+                              data-valmsg-for="Variants[${index}].Price"
+                              data-valmsg-replace="true"></span>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Tồn kho</label>
+                        <input name="Variants[${index}].StockQuantity"
+                               id="Variants_${index}__StockQuantity"
+                               type="number"
+                               min="0"
+                               value="0"
+                               class="form-control variant-stock"
+                               data-val="true"
+                               data-val-required="The StockQuantity field is required."
+                               data-val-range="Số lượng tồn kho không được âm."
+                               data-val-range-min="0"
+                               data-val-range-max="2147483647" />
+                        <span class="text-danger small variant-stock-error field-validation-valid"
+                              data-valmsg-for="Variants[${index}].StockQuantity"
+                              data-valmsg-replace="true"></span>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm remove-variant">Xóa biến thể</button>
+                    </div>
+                </div>`;
+
+            variantContainer.appendChild(row);
+            bindRemoveButton(row);
+            renumberVariants();
+        });
+
+        document.querySelectorAll(".variant-row").forEach(row => bindRemoveButton(row));
+        updateRemoveButtons();
+    </script>
 }

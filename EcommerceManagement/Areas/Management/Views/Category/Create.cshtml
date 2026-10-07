@@ -1,39 +1,107 @@
-﻿@model CategoryViewModel
+@model CategoryViewModel
 
 @{
     ViewData["Title"] = "Thêm danh mục";
 }
 
-<h2>Thêm danh mục</h2>
+<div class="page-heading mb-4">
+    <h3 class="mb-1">Thêm danh mục</h3>
+    <p class="text-muted mb-0">
+        Tạo nhóm sản phẩm mới trong hệ thống.
+    </p>
+</div>
 
-<form asp-action="Create" method="post">
+<div class="card form-card">
+    <div class="card-body">
 
-    <div asp-validation-summary="ModelOnly"
-         class="text-danger"></div>
+        <form asp-action="Create" method="post">
 
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name"
-              class="text-danger"></span>
+            <div asp-validation-summary="ModelOnly"
+                 class="alert alert-danger py-2">
+            </div>
+
+            <div class="mb-3">
+
+                <label asp-for="Name"
+                       class="form-label">
+                </label>
+
+                <input asp-for="Name"
+                       class="form-control" />
+
+                <span asp-validation-for="Name"
+                      class="text-danger small">
+                </span>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label asp-for="ParentCategoryId"
+                       class="form-label">
+                </label>
+
+                <select asp-for="ParentCategoryId"
+                        class="form-select">
+
+                    <option value="">
+                        -- Không có (Danh mục cha) --
+                    </option>
+
+                    @foreach (var category in Model.ParentCategories)
+                    {
+                        <option value="@category.Id">
+                            @category.Name
+                        </option>
+                    }
+
+                </select>
+
+                <span asp-validation-for="ParentCategoryId"
+                      class="text-danger small">
+                </span>
+
+                <small class="text-muted">
+                    Để trống nếu đây là danh mục cấp cao nhất.
+                </small>
+
+            </div>
+
+            <div class="mb-4">
+
+                <label asp-for="Description"
+                       class="form-label">
+                </label>
+
+                <textarea asp-for="Description"
+                          class="form-control"
+                          rows="4">
+                </textarea>
+
+                <span asp-validation-for="Description"
+                      class="text-danger small">
+                </span>
+
+            </div>
+
+            <div class="d-flex gap-2">
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Lưu
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+                    Quay lại
+                </a>
+
+            </div>
+
+        </form>
+
     </div>
-
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description"
-                  class="form-control"></textarea>
-        <span asp-validation-for="Description"
-              class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">
-        Lưu
-    </button>
-
-    <a asp-action="Index" class="btn btn-secondary">
-        Quay lại
-    </a>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

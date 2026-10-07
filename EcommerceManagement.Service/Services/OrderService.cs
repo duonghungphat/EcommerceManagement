@@ -154,9 +154,15 @@ namespace EcommerceManagement.Service.Services
             if (creator == null || !creator.IsActive)
                 throw new InvalidOperationException("Người tạo đơn không hợp lệ.");
 
+            string randomPart = Guid.NewGuid()
+                .ToString("N")[..4]
+                .ToUpperInvariant();
+
+            string orderCode = $"DH-{DateTime.Now:yyMMddHHmmss}-{randomPart}";
+
             var order = new Order
             {
-                OrderCode = $"ORD-{Guid.NewGuid():N}",
+                OrderCode = orderCode,
                 CustomerId = model.CustomerId,
                 CreatedByUserId = createdByUserId,
                 Note = model.Note?.Trim(),

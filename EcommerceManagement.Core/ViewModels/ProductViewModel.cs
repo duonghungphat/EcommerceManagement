@@ -8,23 +8,15 @@ namespace EcommerceManagement.Core.ViewModels
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Tên sản phẩm không được để trống.")]
-        [StringLength(200)]
+        [StringLength(200, ErrorMessage = "Tên sản phẩm tối đa 200 ký tự.")]
         [Display(Name = "Tên sản phẩm")]
         public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "SKU không được để trống.")]
-        [StringLength(100)]
-        [Display(Name = "Mã SKU")]
+        // Các field này được giữ tạm để tương thích với Order/Dashboard hiện tại.
+        // Sau khi chuyển toàn bộ nghiệp vụ sang ProductVariant sẽ xóa.
         public string SKU { get; set; } = string.Empty;
-
-        [Range(typeof(decimal), "0.01", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "Giá sản phẩm phải lớn hơn 0.")]
-        [Display(Name = "Giá sản phẩm")]
         public decimal Price { get; set; }
-
-        [Range(0, int.MaxValue, ErrorMessage = "Số lượng tồn kho không được âm.")]
-        [Display(Name = "Số lượng tồn kho")]
         public int StockQuantity { get; set; }
-
         public int OriginalStockQuantity { get; set; }
 
         [Display(Name = "Trạng thái")]
@@ -33,11 +25,19 @@ namespace EcommerceManagement.Core.ViewModels
         [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn danh mục.")]
         [Display(Name = "Danh mục")]
         public int CategoryId { get; set; }
+
         [Display(Name = "Danh mục")]
         public string? CategoryName { get; set; }
-        [Display(Name = "Ảnh sản phẩm")]
+
         public string? ImagePath { get; set; }
 
+        public int VariantCount { get; set; }
+
         public List<CategoryViewModel> Categories { get; set; } = new();
+
+        public List<ProductVariantViewModel> Variants { get; set; } = new()
+        {
+            new ProductVariantViewModel()
+        };
     }
 }

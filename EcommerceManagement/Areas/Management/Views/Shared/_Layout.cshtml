@@ -1,282 +1,216 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
+
+@{
+    string? roleName = User.FindFirst(ClaimTypes.Role)?.Value;
+    string roleDisplayName = roleName switch
+    {
+        "Admin" => "Quản trị viên",
+        "Manager" => "Quản lý",
+        "Staff" => "Nhân viên",
+        _ => roleName ?? ""
+    };
+
+    string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string displayName = User.Identity?.Name ?? "Người dùng";
+    string userInitial = displayName.Length > 0 ? displayName[..1].ToUpperInvariant() : "U";
+
+    string ItemClass(string controller) =>
+        string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
+            ? "sidebar-item active"
+            : "sidebar-item";
+}
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>@ViewData["Title"] - Hệ thống quản lý bán hàng</title>
 
-    <link rel="stylesheet"
-          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/zuramai/mazer@@docs/demo/assets/compiled/css/app.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/zuramai/mazer@@docs/demo/assets/compiled/css/app-dark.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/zuramai/mazer@@docs/demo/assets/compiled/css/iconly.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
-    <link rel="stylesheet"
-          href="~/css/site.css"
-          asp-append-version="true" />
-
-    <style>
-        body {
-            margin: 0;
-            background-color: #f5f6fa;
+    <script>
+        if (!localStorage.getItem("theme")) {
+            localStorage.setItem("theme", "dark");
         }
-
-        .sidebar {
-            width: 250px;
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: #212529;
-            color: white;
-        }
-
-        .sidebar-brand {
-            padding: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            border-bottom: 1px solid #343a40;
-        }
-
-        .sidebar-menu {
-            padding: 15px 10px;
-        }
-
-            .sidebar-menu a {
-                display: block;
-                padding: 12px 15px;
-                margin-bottom: 5px;
-                text-decoration: none;
-                color: #ced4da;
-                border-radius: 6px;
-            }
-
-                .sidebar-menu a:hover {
-                    background-color: #343a40;
-                    color: white;
-                }
-
-        .main-content {
-            margin-left: 250px;
-            min-height: 100vh;
-        }
-
-        .topbar {
-            height: 65px;
-            background-color: white;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-        }
-
-        .page-content {
-            padding: 25px;
-        }
-
-        .role-badge {
-            font-size: 12px;
-        }
-    </style>
+    </script>
 </head>
 
 <body>
+    <script src="https://cdn.jsdelivr.net/gh/zuramai/mazer@@docs/demo/assets/static/js/initTheme.js"></script>
 
-    @{
-        string? roleName =
-        User.FindFirst(ClaimTypes.Role)?.Value;
+    <div id="app">
+        <div id="sidebar">
+            <div class="sidebar-wrapper active">
+                <div class="sidebar-header position-relative">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a asp-area="Management" asp-controller="Dashboard" asp-action="Index" class="mazer-brand">
+                            <span class="mazer-brand-mark">BH</span>
+                            <span>
+                                <strong>Quản lý bán hàng</strong>
+                                <small>Hệ thống nội bộ</small>
+                            </span>
+                        </a>
 
-        string roleDisplayName = roleName switch
-        {
-            "Admin" => "Quản trị viên",
-            "Manager" => "Quản lý",
-            "Staff" => "Nhân viên",
-            _ => roleName ?? ""
-        };
-    }
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-
-        <div class="sidebar-brand">
-            Hệ thống quản lý bán hàng
-        </div>
-
-        <div class="sidebar-menu">
-
-            <div class="text-secondary small px-3 mb-2">
-                QUẢN LÝ
-            </div>
-
-            <a asp-area="Management"
-               asp-controller="Dashboard"
-               asp-action="Index">
-                Tổng quan
-            </a>
-
-            <a asp-area="Management"
-               asp-controller="Category"
-               asp-action="Index">
-                Danh mục
-            </a>
-
-            <a asp-area="Management"
-               asp-controller="Product"
-               asp-action="Index">
-                Sản phẩm
-            </a>
-
-            <a asp-area="Management"
-               asp-controller="Customer"
-               asp-action="Index">
-                Khách hàng
-            </a>
-
-            <a asp-area="Management"
-               asp-controller="Order"
-               asp-action="Index">
-                Đơn hàng
-            </a>
-
-            <a asp-area="Management"
-               asp-controller="Payment"
-               asp-action="Index">
-                Thanh toán
-            </a>
-
-            @if (User.IsInRole("Admin"))
-            {
-                <div class="text-secondary small px-3 mt-4 mb-2">
-                    QUẢN TRỊ
+                        <div class="sidebar-toggler x">
+                            <a href="#" class="sidebar-hide d-xl-none d-block">×</a>
+                        </div>
+                    </div>
                 </div>
 
-                <a asp-area="Management"
-                   asp-controller="User"
-                   asp-action="Index">
-                    Tài khoản
-                </a>
+                <div class="sidebar-menu">
+                    <ul class="menu">
+                        <li class="sidebar-title">Tổng quan</li>
+                        <li class="@ItemClass("Dashboard")">
+                            <a asp-area="Management" asp-controller="Dashboard" asp-action="Index" class="sidebar-link">
+                                <span class="mazer-menu-icon">▦</span>
+                                <span>Tổng quan</span>
+                            </a>
+                        </li>
 
-                <a asp-area="Management"
-                   asp-controller="AuditLog"
-                   asp-action="Index">
-                    Nhật ký hệ thống
-                </a>
-            }
+                        <li class="sidebar-title">Quản lý</li>
+                        <li class="@ItemClass("Category")">
+                            <a asp-area="Management" asp-controller="Category" asp-action="Index" class="sidebar-link">
+                                <span class="mazer-menu-icon">◫</span>
+                                <span>Danh mục</span>
+                            </a>
+                        </li>
+                        <li class="@ItemClass("Product")">
+                            <a asp-area="Management" asp-controller="Product" asp-action="Index" class="sidebar-link">
+                                <span class="mazer-menu-icon">◆</span>
+                                <span>Sản phẩm</span>
+                            </a>
+                        </li>
+                        <li class="@ItemClass("Customer")">
+                            <a asp-area="Management" asp-controller="Customer" asp-action="Index" class="sidebar-link">
+                                <span class="mazer-menu-icon">●</span>
+                                <span>Khách hàng</span>
+                            </a>
+                        </li>
+                        <li class="@ItemClass("Order")">
+                            <a asp-area="Management" asp-controller="Order" asp-action="Index" class="sidebar-link">
+                                <span class="mazer-menu-icon">▤</span>
+                                <span>Đơn hàng</span>
+                            </a>
+                        </li>
+                        <li class="@ItemClass("Payment")">
+                            <a asp-area="Management" asp-controller="Payment" asp-action="Index" class="sidebar-link">
+                                <span class="mazer-menu-icon">◈</span>
+                                <span>Thanh toán</span>
+                            </a>
+                        </li>
 
-            <div class="text-secondary small px-3 mt-4 mb-2">
-                TÀI KHOẢN
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="sidebar-title">Quản trị</li>
+                            <li class="@ItemClass("User")">
+                                <a asp-area="Management" asp-controller="User" asp-action="Index" class="sidebar-link">
+                                    <span class="mazer-menu-icon">♟</span>
+                                    <span>Tài khoản</span>
+                                </a>
+                            </li>
+                            <li class="@ItemClass("AuditLog")">
+                                <a asp-area="Management" asp-controller="AuditLog" asp-action="Index" class="sidebar-link">
+                                    <span class="mazer-menu-icon">≡</span>
+                                    <span>Nhật ký hệ thống</span>
+                                </a>
+                            </li>
+                        }
+
+                        <li class="sidebar-title">Tài khoản</li>
+                        <li class="@ItemClass("Account")">
+                            <a asp-area="" asp-controller="Account" asp-action="ChangePassword" class="sidebar-link">
+                                <span class="mazer-menu-icon">⌘</span>
+                                <span>Đổi mật khẩu</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-
-            <a asp-area=""
-               asp-controller="Account"
-               asp-action="ChangePassword">
-                Đổi mật khẩu
-            </a>
-
         </div>
 
-    </div>
+        <div id="main">
+            <header class="mb-4">
+                <a href="#" class="burger-btn d-block d-xl-none">
+                    <span class="fs-3">☰</span>
+                </a>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-
-        <!-- TOPBAR -->
-        <div class="topbar">
-
-            <div>
-                <strong>
-                    @ViewData["Title"]
-                </strong>
-            </div>
-
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <div class="d-flex align-items-center gap-3">
-
-                    <div class="text-end">
-
-                        <div>
-                            <strong>
-                                @User.Identity.Name
-                            </strong>
-                        </div>
-
-                        <span class="badge bg-primary role-badge">
-                            @roleDisplayName
-                        </span>
-
+                <div class="mazer-topbar">
+                    <div>
+                        <div class="text-muted small">Hệ thống quản lý bán hàng</div>
+                        <h5 class="mb-0">@ViewData["Title"]</h5>
                     </div>
 
-                    <form asp-area=""
-                          asp-controller="Account"
-                          asp-action="Logout"
-                          method="post">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="theme-toggle d-flex gap-2 align-items-center">
+                            <span title="Chế độ sáng">☀</span>
+                            <div class="form-check form-switch fs-6 mb-0">
+                                <input class="form-check-input me-0" type="checkbox" id="toggle-dark" style="cursor:pointer" />
+                            </div>
+                            <span title="Chế độ tối">☾</span>
+                        </div>
 
-                        <button type="submit"
-                                class="btn btn-outline-danger btn-sm">
-                            Đăng xuất
-                        </button>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <a href="#" class="mazer-user dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="mazer-avatar">@userInitial</span>
+                                    <span class="d-none d-md-block">
+                                        <strong>@displayName</strong>
+                                        <small>@roleDisplayName</small>
+                                    </span>
+                                </a>
 
-                    </form>
-
+                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Account" asp-action="ChangePassword">
+                                            Đổi mật khẩu
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                    </div>
                 </div>
-            }
-
-        </div>
-
-        <!-- PAGE CONTENT -->
-        <div class="page-content">
+            </header>
 
             @if (TempData["Success"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show"
-                     role="alert">
-
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
                     @TempData["Success"]
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="alert">
-                    </button>
-
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
                 </div>
             }
 
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show"
-                     role="alert">
-
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     @TempData["Error"]
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="alert">
-                    </button>
-
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
                 </div>
             }
 
-            <main role="main">
+            <main class="mazer-content">
                 @RenderBody()
             </main>
-
         </div>
-
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/zuramai/mazer@@docs/demo/assets/static/js/components/dark.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/zuramai/mazer@@docs/demo/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/zuramai/mazer@@docs/demo/assets/compiled/js/app.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script src="~/js/site.js"
-            asp-append-version="true">
-    </script>
-
-    @await RenderSectionAsync(
-    "Scripts",
-        required: false)
-
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

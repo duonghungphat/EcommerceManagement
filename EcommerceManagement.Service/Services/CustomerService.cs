@@ -50,7 +50,7 @@ namespace EcommerceManagement.Service.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task CreateAsync(CustomerViewModel model, int actorUserId, string ipAddress)
+        public async Task<int> CreateAsync(CustomerViewModel model, int actorUserId, string ipAddress)
         {
             string email = model.Email.Trim();
 
@@ -75,6 +75,8 @@ namespace EcommerceManagement.Service.Services
             await _auditLogService.RecordAsync("CreateCustomer", "Customer", customer.Id == 0 ? null : customer.Id, $"Thêm khách hàng: {customer.FullName}", ipAddress, actorUserId);
 
             await _unitOfWork.SaveChangesAsync();
+
+            return customer.Id;
         }
 
         public async Task UpdateAsync(CustomerViewModel model, int actorUserId, string ipAddress)

@@ -15,5 +15,11 @@ namespace EcommerceManagement.Core.ViewModels
         [Display(Name = "Mô tả")]
         public string? Description { get; set; }
 
+        [Display(Name = "Danh mục cha")]
+        public int? ParentCategoryId { get; set; }
+
+        public string? ParentCategoryName { get; set; }
+
+        public List<CategoryViewModel> ParentCategories { get; set; } = new();
     }
 }

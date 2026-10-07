@@ -6,6 +6,7 @@ namespace EcommerceManagement.Data.UnitOfWork
     public interface IUnitOfWork
     {
         IRepository<Product> Products { get; }
+        IRepository<ProductVariant> ProductVariants { get; }
         IRepository<Category> Categories { get; }
         IRepository<Customer> Customers { get; }
         IRepository<Order> Orders { get; }

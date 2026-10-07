@@ -3,6 +3,7 @@ using System;
 using EcommerceManagement.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcommerceManagement.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261006182612_AddCategoryHierarchy")]
+    partial class AddCategoryHierarchy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -316,43 +319,6 @@ namespace EcommerceManagement.Data.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductVariant", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SKU")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("StockQuantity")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("SKU")
-                        .IsUnique();
-
-                    b.ToTable("ProductVariants");
-                });
-
             modelBuilder.Entity("EcommerceManagement.Core.Models.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -463,17 +429,6 @@ namespace EcommerceManagement.Data.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductVariant", b =>
-                {
-                    b.HasOne("EcommerceManagement.Core.Models.Product", "Product")
-                        .WithMany("Variants")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("EcommerceManagement.Core.Models.ApplicationUser", b =>
                 {
                     b.Navigation("AuditLogs");
@@ -503,8 +458,6 @@ namespace EcommerceManagement.Data.Migrations
             modelBuilder.Entity("EcommerceManagement.Core.Models.Product", b =>
                 {
                     b.Navigation("OrderItems");
-
-                    b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("EcommerceManagement.Core.Models.Role", b =>

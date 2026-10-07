@@ -13,6 +13,7 @@ namespace EcommerceManagement.Service.Interfaces
         Task CreateAsync(ProductViewModel model, int actorUserId, string ipAddress);
 
         Task UpdateAsync(ProductViewModel model, int actorUserId, string ipAddress);
+        Task ToggleStatusAsync(int id, int actorUserId, string ipAddress);
 
         Task DeleteAsync(int id, int actorUserId, string ipAddress);
     }

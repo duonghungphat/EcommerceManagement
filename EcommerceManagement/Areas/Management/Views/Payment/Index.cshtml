@@ -1,155 +1,102 @@
-﻿@using EcommerceManagement.Core.Enums
+@using EcommerceManagement.Core.Enums
 @model EcommerceManagement.Core.ViewModels.PaymentListViewModel
 
 @{
     ViewData["Title"] = "Thanh toán";
 }
 
-<h2>Lịch sử thanh toán</h2>
-
-<form method="get"
-      asp-action="Index"
-      class="row g-2 mb-3">
-
-    <div class="col-md-3">
-
-        <select asp-for="Status" class="form-select">
-
-            <option value="">
-                -- Tất cả trạng thái --
-            </option>
-
-            <option value="@PaymentStatus.Pending">
-                Đang chờ
-            </option>
-
-            <option value="@PaymentStatus.Successful">
-                Thành công
-            </option>
-
-            <option value="@PaymentStatus.Failed">
-                Thất bại
-            </option>
-
-            <option value="@PaymentStatus.Refunded">
-                Đã hoàn tiền
-            </option>
-
-        </select>
-
+<div class="page-heading mb-4">
+    <div>
+        <h3 class="mb-1">Lịch sử thanh toán</h3>
+        <p class="text-muted mb-0">Theo dõi các giao dịch thanh toán và hoàn tiền.</p>
     </div>
+</div>
 
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end crud-filter">
+            <div class="col-lg-3 col-md-6">
+                <select asp-for="Status" class="form-select">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="@PaymentStatus.Pending">Đang chờ</option>
+                    <option value="@PaymentStatus.Successful">Thành công</option>
+                    <option value="@PaymentStatus.Failed">Thất bại</option>
+                    <option value="@PaymentStatus.Refunded">Đã hoàn tiền</option>
+                </select>
+            </div>
 
-    <div class="col-md-3">
+            <div class="col-lg-3 col-md-6">
+                <label asp-for="FromDate" class="form-label small text-muted">Từ ngày</label>
+                <input asp-for="FromDate" type="date" class="form-control" />
+            </div>
 
-        <input asp-for="FromDate"
-               type="date"
-               class="form-control" />
+            <div class="col-lg-3 col-md-6">
+                <label asp-for="ToDate" class="form-label small text-muted">Đến ngày</label>
+                <input asp-for="ToDate" type="date" class="form-control" />
+            </div>
 
+            <div class="col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
     </div>
+</div>
 
-
-    <div class="col-md-3">
-
-        <input asp-for="ToDate"
-               type="date"
-               class="form-control" />
-
-    </div>
-
-
-    <div class="col-md-3">
-
-        <button type="submit"
-                class="btn btn-primary">
-
-            Lọc
-
-        </button>
-
-        <a asp-action="Index"
-           class="btn btn-secondary">
-
-            Xóa lọc
-
-        </a>
-
-    </div>
-
-</form>
-
-
-<table class="table table-bordered table-hover">
-
-    <thead>
-        <tr>
-            <th>Mã đơn</th>
-            <th>Số tiền</th>
-            <th>Phương thức</th>
-            <th>Mã giao dịch</th>
-            <th>Trạng thái</th>
-            <th>Thời điểm</th>
-            <th>Chi tiết</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        @if (Model.Payments.Count == 0)
-        {
-            <tr>
-                <td colspan="7"
-                    class="text-center text-muted">
-
-                    Chưa có giao dịch.
-
-                </td>
-            </tr>
-        }
-
-        @foreach (var payment in Model.Payments)
-        {
-            <tr>
-
-                <td>
-                    @payment.OrderCode
-                </td>
-
-                <td>
-                    @payment.Amount.ToString("N0") đ
-                </td>
-
-                <td>
-                    @payment.MethodText
-                </td>
-
-                <td>
-                    @(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)
-            </td>
-
-                <td>
-                    @payment.StatusText
-                </td>
-
-                <td>
-                    @payment.TransactionAt.ToString("dd/MM/yyyy HH:mm")
-                </td>
-
-                <td>
-
-                    <a asp-area="Management"
-                       asp-controller="Order"
-                       asp-action="Details"
-                       asp-route-id="@payment.OrderId">
-
-                        Xem đơn hàng
-
-                    </a>
-
-                </td>
-
-            </tr>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th class="text-end">Số tiền</th>
+                    <th>Phương thức</th>
+                    <th>Mã giao dịch</th>
+                    <th>Trạng thái</th>
+                    <th>Thời điểm</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Payments.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có giao dịch.</td>
+                    </tr>
                 }
 
-    </tbody>
-</table>
+                @foreach (var payment in Model.Payments)
+                {
+                    string statusClass = payment.Status switch
+                    {
+                        PaymentStatus.Pending => "bg-warning",
+                        PaymentStatus.Successful => "bg-success",
+                        PaymentStatus.Failed => "bg-danger",
+                        PaymentStatus.Refunded => "bg-info",
+                        _ => "bg-secondary"
+                    };
+
+                    <tr>
+                        <td class="fw-semibold">@payment.OrderCode</td>
+                        <td class="text-end fw-semibold">@payment.Amount.ToString("N0") đ</td>
+                        <td>@payment.MethodText</td>
+                        <td>@(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)</td>
+                        <td><span class="badge @statusClass">@payment.StatusText</span></td>
+                        <td>@payment.TransactionAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <div class="crud-actions">
+                                <a asp-area="Management"
+                                   asp-controller="Order"
+                                   asp-action="Details"
+                                   asp-route-id="@payment.OrderId"
+                                   class="btn btn-primary btn-sm">
+                                    Xem đơn
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

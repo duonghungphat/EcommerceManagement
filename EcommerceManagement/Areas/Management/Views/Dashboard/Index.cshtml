@@ -1,207 +1,306 @@
-﻿@using System.Text.Json
+@using System.Text.Json
 @model DashboardViewModel
 
 @{
     ViewData["Title"] = "Tổng quan";
 }
 
-<h2>Tổng quan</h2>
+<div class="page-heading mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <h3 class="mb-1">Tổng quan hoạt động</h3>
+            <p class="text-muted mb-0">Theo dõi nhanh tình hình kinh doanh của hệ thống.</p>
+        </div>
 
-<div class="row mb-4">
-
-    <div class="col">
-        <strong>Tổng sản phẩm:</strong>
-        @Model.TotalProducts
+        <a asp-controller="Order" asp-action="Create" class="btn btn-primary">
+            Tạo đơn hàng
+        </a>
     </div>
-
-    <div class="col">
-        <strong>Khách hàng:</strong>
-        @Model.TotalCustomers
-    </div>
-
-    <div class="col">
-        <strong>Đơn hàng:</strong>
-        @Model.TotalOrders
-    </div>
-
-    <div class="col">
-        <strong>Đang chờ xử lý:</strong>
-        @Model.PendingOrders
-    </div>
-
-    <div class="col">
-        <strong>Doanh thu:</strong>
-        @Model.TotalRevenue.ToString("N0") đ
-    </div>
-
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl">
+        <div class="card dashboard-stat">
+            <div class="card-body">
+                <div class="dashboard-stat-label">Sản phẩm</div>
+                <div class="dashboard-stat-value">@Model.TotalProducts</div>
+                <div class="text-muted">Tổng số sản phẩm</div>
+            </div>
+        </div>
+    </div>
 
-<h4>5 đơn hàng mới nhất</h4>
+    <div class="col-sm-6 col-xl">
+        <div class="card dashboard-stat">
+            <div class="card-body">
+                <div class="dashboard-stat-label">Khách hàng</div>
+                <div class="dashboard-stat-value">@Model.TotalCustomers</div>
+                <div class="text-muted">Khách hàng đang quản lý</div>
+            </div>
+        </div>
+    </div>
 
-<table class="table table-bordered">
+    <div class="col-sm-6 col-xl">
+        <div class="card dashboard-stat">
+            <div class="card-body">
+                <div class="dashboard-stat-label">Đơn hàng</div>
+                <div class="dashboard-stat-value">@Model.TotalOrders</div>
+                <div class="text-muted">Tổng số đơn hàng</div>
+            </div>
+        </div>
+    </div>
 
-    <thead>
-        <tr>
-            <th>Mã đơn</th>
-            <th>Khách hàng</th>
-            <th>Ngày tạo</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
-        </tr>
-    </thead>
+    <div class="col-sm-6 col-xl">
+        <div class="card dashboard-stat">
+            <div class="card-body">
+                <div class="dashboard-stat-label">Chờ xử lý</div>
+                <div class="dashboard-stat-value">@Model.PendingOrders</div>
+                <div class="text-muted">Đơn cần theo dõi</div>
+            </div>
+        </div>
+    </div>
 
-    <tbody>
+    <div class="col-sm-6 col-xl">
+        <div class="card dashboard-stat">
+            <div class="card-body">
+                <div class="dashboard-stat-label">Doanh thu</div>
+                <div class="dashboard-stat-value">@Model.TotalRevenue.ToString("N0") đ</div>
+                <div class="text-muted">Doanh thu đã thu</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        @foreach (var order in Model.LatestOrders)
-        {
-            <tr>
-                <td>
-                    <a asp-controller="Order"
-                       asp-action="Details"
-                       asp-route-id="@order.Id">
-                        @order.OrderCode
-                    </a>
-                </td>
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <div>
+                    <h4 class="mb-1">Doanh thu theo tháng</h4>
+                    <small class="text-muted">Biến động doanh thu đã ghi nhận</small>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height:320px">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <td>@order.CustomerName</td>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div>
+                    <h4 class="mb-1">Sắp hết hàng</h4>
+                    <small class="text-muted">Tồn kho từ 10 trở xuống</small>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>SKU</th>
+                            <th class="text-end">Tồn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.LowStockProducts.Any())
+                        {
+                            @foreach (var item in Model.LowStockProducts)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.Name</td>
+                                    <td class="text-muted">@item.SKU</td>
+                                    <td class="text-end">
+                                        <span class="badge bg-danger">@item.StockQuantity</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">Không có sản phẩm sắp hết hàng.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <td>
-                    @order.CreatedAt.ToString("dd/MM/yyyy HH:mm")
-                </td>
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1">5 đơn hàng mới nhất</h4>
+            <small class="text-muted">Các đơn hàng được tạo gần đây</small>
+        </div>
+        <a asp-controller="Order" asp-action="Index" class="btn btn-outline-primary btn-sm">Xem tất cả</a>
+    </div>
 
-                <td>
-                    @order.TotalAmount.ToString("N0") đ
-                </td>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày tạo</th>
+                    <th class="text-end">Tổng tiền</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.LatestOrders.Any())
+                {
+                    @foreach (var order in Model.LatestOrders)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Order" asp-action="Details" asp-route-id="@order.Id" class="fw-semibold">
+                                    @order.OrderCode
+                                </a>
+                            </td>
+                            <td>@order.CustomerName</td>
+                            <td class="text-muted">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end fw-semibold">@order.TotalAmount.ToString("N0") đ</td>
+                            <td><span class="badge bg-primary">@order.StatusText</span></td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Chưa có đơn hàng.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
-                <td>
-                    @order.StatusText
-                </td>
-            </tr>
-        }
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <div>
+                    <h4 class="mb-1">Sản phẩm bán chạy</h4>
+                    <small class="text-muted">Xếp hạng theo số lượng bán</small>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-center">Đã bán</th>
+                            <th class="text-end">Doanh số</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.TopProducts.Any())
+                        {
+                            @foreach (var item in Model.TopProducts)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.ProductName</td>
+                                    <td class="text-center">@item.QuantitySold</td>
+                                    <td class="text-end">@item.Revenue.ToString("N0") đ</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">Chưa có dữ liệu bán hàng.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-    </tbody>
-
-</table>
-
-
-<h4>Sản phẩm sắp hết hàng</h4>
-
-<table class="table table-bordered">
-
-    <thead>
-        <tr>
-            <th>Sản phẩm</th>
-            <th>SKU</th>
-            <th>Tồn kho</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        @foreach (var item in Model.LowStockProducts)
-        {
-            <tr>
-                <td>@item.Name</td>
-                <td>@item.SKU</td>
-                <td>@item.StockQuantity</td>
-            </tr>
-        }
-
-    </tbody>
-
-</table>
-
-
-<h4>Doanh thu theo tháng</h4>
-
-<canvas id="revenueChart"
-        style="max-height: 350px;">
-</canvas>
-
-
-<h4 class="mt-4">
-    Sản phẩm bán chạy nhất
-</h4>
-
-<table class="table table-bordered">
-
-    <thead>
-        <tr>
-            <th>Sản phẩm</th>
-            <th>Số lượng bán</th>
-            <th>Doanh số</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        @foreach (var item in Model.TopProducts)
-        {
-            <tr>
-                <td>@item.ProductName</td>
-                <td>@item.QuantitySold</td>
-                <td>@item.Revenue.ToString("N0") đ</td>
-            </tr>
-        }
-
-    </tbody>
-
-</table>
-
-
-<h4>Khách hàng có doanh số cao nhất</h4>
-
-<table class="table table-bordered">
-
-    <thead>
-        <tr>
-            <th>Khách hàng</th>
-            <th>Số đơn</th>
-            <th>Doanh số</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        @foreach (var item in Model.TopCustomers)
-        {
-            <tr>
-                <td>@item.CustomerName</td>
-                <td>@item.OrderCount</td>
-                <td>@item.TotalSales.ToString("N0") đ</td>
-            </tr>
-        }
-
-    </tbody>
-
-</table>
-
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <div>
+                    <h4 class="mb-1">Khách hàng nổi bật</h4>
+                    <small class="text-muted">Khách hàng có doanh số cao nhất</small>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Khách hàng</th>
+                            <th class="text-center">Số đơn</th>
+                            <th class="text-end">Doanh số</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.TopCustomers.Any())
+                        {
+                            @foreach (var item in Model.TopCustomers)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.CustomerName</td>
+                                    <td class="text-center">@item.OrderCount</td>
+                                    <td class="text-end">@item.TotalSales.ToString("N0") đ</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">Chưa có dữ liệu khách hàng.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
-
         const labels = @Html.Raw(JsonSerializer.Serialize(Model.MonthlyRevenue.Select(x => x.Label)));
-
         const revenues = @Html.Raw(JsonSerializer.Serialize(Model.MonthlyRevenue.Select(x => x.Revenue)));
+        const context = document.getElementById("revenueChart").getContext("2d");
 
-        const context = document
-            .getElementById("revenueChart")
-            .getContext("2d");
-
-    new Chart(context, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Doanh thu",
-                data: revenues
-            }]
-        }
-    });
-
-</script>
+        new Chart(context, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Doanh thu",
+                    data: revenues,
+                    backgroundColor: "rgba(67, 94, 190, 0.65)",
+                    borderColor: "#435ebe",
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat("vi-VN").format(value) + " đ";
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 }

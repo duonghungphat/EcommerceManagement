@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 @model IEnumerable<UserListItemViewModel>
 
 @{
@@ -6,75 +6,79 @@
     int currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }
 
-<h2>Danh sách tài khoản</h2>
+<div class="page-heading mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <h3 class="mb-1">Danh sách tài khoản</h3>
+            <p class="text-muted mb-0">Quản lý vai trò và trạng thái tài khoản nội bộ.</p>
+        </div>
 
-<a asp-action="Create"
-   class="btn btn-primary mb-3">
-    Tạo tài khoản
-</a>
+        <a asp-action="Create" class="btn btn-primary">Tạo tài khoản</a>
+    </div>
+</div>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Họ tên</th>
-            <th>Email</th>
-            <th>Vai trò</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Chưa có tài khoản.</td>
+                    </tr>
+                }
 
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.FullName</td>
-                <td>@item.Email</td>
-                <td>@item.RoleDisplayName</td>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.FullName</td>
+                        <td>@item.Email</td>
+                        <td><span class="badge bg-primary">@item.RoleDisplayName</span></td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-success">Đang hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Đã khóa</span>
+                            }
+                        </td>
 
-                <td>
-                    @(item.IsActive ? "Đang hoạt động" : "Đã khóa")
-                </td>
+                        <td>
+                            @if (item.Id != currentUserId)
+                            {
+                                <div class="crud-actions">
+                                    <a asp-action="EditRole" asp-route-id="@item.Id" class="btn btn-info btn-sm">Đổi vai trò</a>
+                                    <a asp-action="ResetPassword" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Đặt lại mật khẩu</a>
 
-                <td>
-                    @if (item.Id != currentUserId)
-                    {
-                        <a asp-action="EditRole"
-                           asp-route-id="@item.Id">
-                            Đổi vai trò
-                        </a>
-
-                        <span> | </span>
-
-                        <a asp-action="ResetPassword"
-                           asp-route-id="@item.Id">
-                            Đặt lại mật khẩu
-                        </a>
-
-                        <span> | </span>
-
-                        <form asp-action="ToggleActive"
-                              method="post"
-                              class="d-inline">
-
-                            <input type="hidden"
-                                   name="id"
-                                   value="@item.Id" />
-
-                            <button type="submit"
-                                    class="btn btn-link p-0">
-                                @(item.IsActive ? "Khóa" : "Mở khóa")
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <span class="text-muted">
-                            Tài khoản hiện tại
-                        </span>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                                    <form asp-action="ToggleActive" method="post">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn @(item.IsActive ? "btn-danger" : "btn-success") btn-sm">
+                                            @(item.IsActive ? "Khóa" : "Mở khóa")
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-end">
+                                    <span class="badge bg-light-secondary">Tài khoản hiện tại</span>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -12,5 +12,6 @@ namespace EcommerceManagement.Core.Models
         public int CategoryId { get; set; }
         public Category Category { get; set; } = null!;
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
     }
 }

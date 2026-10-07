@@ -1,145 +1,108 @@
-﻿@using EcommerceManagement.Core.Enums
+@using EcommerceManagement.Core.Enums
 @model EcommerceManagement.Core.ViewModels.OrderListViewModel
 
 @{
     ViewData["Title"] = "Đơn hàng";
 }
 
-<h2>Danh sách đơn hàng</h2>
+<div class="page-heading mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+            <h3 class="mb-1">Danh sách đơn hàng</h3>
+            <p class="text-muted mb-0">Theo dõi đơn hàng, người tạo và trạng thái xử lý.</p>
+        </div>
 
-<div class="mb-3">
-    <a asp-action="Create"
-       class="btn btn-primary">
-        Tạo đơn hàng
-    </a>
+        <a asp-action="Create" class="btn btn-primary">Tạo đơn hàng</a>
+    </div>
 </div>
 
-<form method="get"
-      asp-action="Index"
-      class="row g-2 mb-3">
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end crud-filter">
+            <div class="col-lg-3 col-md-6">
+                <input asp-for="SearchTerm"
+                       class="form-control"
+                       placeholder="Mã đơn hoặc tên khách hàng..." />
+            </div>
 
-    <div class="col-md-3">
-        <input asp-for="SearchTerm"
-               class="form-control"
-               placeholder="Mã đơn hoặc tên khách hàng..." />
+            <div class="col-lg-2 col-md-6">
+                <select asp-for="Status" class="form-select">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="@OrderStatus.Pending">Chờ xử lý</option>
+                    <option value="@OrderStatus.Confirmed">Đã xác nhận</option>
+                    <option value="@OrderStatus.Shipping">Đang giao</option>
+                    <option value="@OrderStatus.Completed">Hoàn thành</option>
+                    <option value="@OrderStatus.Cancelled">Đã hủy</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <label asp-for="FromDate" class="form-label small text-muted">Từ ngày</label>
+                <input asp-for="FromDate" type="date" class="form-control" />
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <label asp-for="ToDate" class="form-label small text-muted">Đến ngày</label>
+                <input asp-for="ToDate" type="date" class="form-control" />
+            </div>
+
+            <div class="col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="col-md-2">
-        <select asp-for="Status"
-                class="form-select">
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Người tạo</th>
+                    <th>Ngày tạo</th>
+                    <th class="text-end">Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Orders.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Không có đơn hàng.</td>
+                    </tr>
+                }
 
-            <option value="">
-                -- Tất cả trạng thái --
-            </option>
+                @foreach (var item in Model.Orders)
+                {
+                    string statusClass = item.Status switch
+                    {
+                        OrderStatus.Pending => "bg-warning",
+                        OrderStatus.Confirmed => "bg-primary",
+                        OrderStatus.Shipping => "bg-info",
+                        OrderStatus.Completed => "bg-success",
+                        OrderStatus.Cancelled => "bg-danger",
+                        _ => "bg-secondary"
+                    };
 
-            <option value="@OrderStatus.Pending">
-                Chờ xử lý
-            </option>
-
-            <option value="@OrderStatus.Confirmed">
-                Đã xác nhận
-            </option>
-
-            <option value="@OrderStatus.Shipping">
-                Đang giao
-            </option>
-
-            <option value="@OrderStatus.Completed">
-                Hoàn thành
-            </option>
-
-            <option value="@OrderStatus.Cancelled">
-                Đã hủy
-            </option>
-
-        </select>
+                    <tr>
+                        <td class="fw-semibold">@item.OrderCode</td>
+                        <td>@item.CustomerName</td>
+                        <td>@item.CreatedByName</td>
+                        <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-end fw-semibold">@item.TotalAmount.ToString("N0") đ</td>
+                        <td><span class="badge @statusClass">@item.StatusText</span></td>
+                        <td>
+                            <div class="crud-actions">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary btn-sm">Chi tiết</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-
-    <div class="col-md-2">
-        <input asp-for="FromDate"
-               type="date"
-               class="form-control" />
-    </div>
-
-    <div class="col-md-2">
-        <input asp-for="ToDate"
-               type="date"
-               class="form-control" />
-    </div>
-
-    <div class="col-md-3">
-        <button type="submit"
-                class="btn btn-primary">
-            Tìm kiếm
-        </button>
-
-        <a asp-action="Index"
-           class="btn btn-secondary">
-            Xóa lọc
-        </a>
-    </div>
-
-</form>
-
-<table class="table table-bordered table-hover">
-    <thead>
-        <tr>
-            <th>Mã đơn</th>
-            <th>Khách hàng</th>
-            <th>Người tạo</th>
-            <th>Ngày tạo</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        @if (Model.Orders.Count == 0)
-        {
-            <tr>
-                <td colspan="7"
-                    class="text-center text-muted">
-
-                    Không có đơn hàng.
-
-                </td>
-            </tr>
-        }
-
-        @foreach (var item in Model.Orders)
-        {
-            <tr>
-                <td>@item.OrderCode</td>
-
-                <td>@item.CustomerName</td>
-
-                <td>@item.CreatedByName</td>
-
-                <td>
-                    @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
-                </td>
-
-                <td>
-                    @item.TotalAmount.ToString("N0") đ
-                </td>
-
-                <td>
-                    @item.StatusText
-                </td>
-
-                <td>
-                    <a asp-action="Details"
-                       asp-route-id="@item.Id"
-                       class="btn btn-sm btn-primary">
-
-                        Chi tiết
-
-                    </a>
-                </td>
-            </tr>
-        }
-
-    </tbody>
-</table>
+</div>

@@ -1,79 +1,64 @@
-﻿@model UserCreateViewModel
+@model UserCreateViewModel
 
 @{
     ViewData["Title"] = "Tạo tài khoản";
 }
 
-<h2>Tạo tài khoản</h2>
+<div class="page-heading mb-4">
+    <h3 class="mb-1">Tạo tài khoản</h3>
+    <p class="text-muted mb-0">Tạo tài khoản nội bộ và gán vai trò sử dụng hệ thống.</p>
+</div>
 
-<form asp-action="Create" method="post">
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
 
-    <div asp-validation-summary="ModelOnly"
-         class="text-danger">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="FullName" class="form-label">Họ tên</label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Password" class="form-label">Mật khẩu</label>
+                    <input asp-for="Password" type="password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="RoleId" class="form-label">Vai trò</label>
+                    <select asp-for="RoleId" class="form-select">
+                        <option value="">-- Chọn vai trò --</option>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <option value="@role.Id">@role.DisplayName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="RoleId" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="FullName">Họ tên</label>
-        <input asp-for="FullName"
-               class="form-control" />
-        <span asp-validation-for="FullName"
-              class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Email">Email</label>
-        <input asp-for="Email"
-               class="form-control" />
-        <span asp-validation-for="Email"
-              class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Password">Mật khẩu</label>
-        <input asp-for="Password"
-               type="password"
-               class="form-control" />
-        <span asp-validation-for="Password"
-              class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="ConfirmPassword">
-            Xác nhận mật khẩu
-        </label>
-
-        <input asp-for="ConfirmPassword"
-               type="password"
-               class="form-control" />
-
-        <span asp-validation-for="ConfirmPassword"
-              class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="RoleId">Vai trò</label>
-
-        <select asp-for="RoleId"
-                class="form-select">
-
-            <option value="">
-                -- Chọn vai trò --
-            </option>
-
-            @foreach (var role in Model.Roles)
-            {
-                <option value="@role.Id">
-                    @role.DisplayName
-                </option>
-            }
-        </select>
-    </div>
-
-    <button type="submit"
-            class="btn btn-primary">
-        Lưu
-    </button>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
