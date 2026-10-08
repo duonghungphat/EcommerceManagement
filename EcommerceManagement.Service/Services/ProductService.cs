@@ -27,14 +27,33 @@ namespace EcommerceManagement.Service.Services
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    SKU = p.SKU,
-                    Price = p.Variants.Any() ? p.Variants.Min(v => v.Price) : p.Price,
-                    StockQuantity = p.Variants.Any() ? p.Variants.Sum(v => v.StockQuantity) : p.StockQuantity,
+                    MinPrice = p.Variants.Select(v => (decimal?)v.Price).Min() ?? 0m,
+                    MaxPrice = p.Variants.Select(v => (decimal?)v.Price).Max() ?? 0m,
+                    TotalStockQuantity = p.Variants.Select(v => (int?)v.StockQuantity).Sum() ?? 0,
                     Status = p.Status,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
                     ImagePath = p.ImagePath,
                     VariantCount = p.Variants.Count()
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<ProductVariantOptionViewModel>> GetSellableVariantsAsync()
+        {
+            return await _unitOfWork.ProductVariants
+                .BuildQuery(v => v.Product.Status == ProductStatus.Selling && v.StockQuantity > 0)
+                .OrderBy(v => v.Product.Name)
+                .ThenBy(v => v.Name)
+                .Select(v => new ProductVariantOptionViewModel
+                {
+                    Id = v.Id,
+                    ProductId = v.ProductId,
+                    ProductName = v.Product.Name,
+                    VariantName = v.Name,
+                    SKU = v.SKU,
+                    Price = v.Price,
+                    StockQuantity = v.StockQuantity
                 })
                 .ToListAsync();
         }
@@ -47,10 +66,9 @@ namespace EcommerceManagement.Service.Services
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    SKU = p.SKU,
-                    Price = p.Variants.Any() ? p.Variants.Min(v => v.Price) : p.Price,
-                    StockQuantity = p.Variants.Any() ? p.Variants.Sum(v => v.StockQuantity) : p.StockQuantity,
-                    OriginalStockQuantity = p.StockQuantity,
+                    MinPrice = p.Variants.Select(v => (decimal?)v.Price).Min() ?? 0m,
+                    MaxPrice = p.Variants.Select(v => (decimal?)v.Price).Max() ?? 0m,
+                    TotalStockQuantity = p.Variants.Select(v => (int?)v.StockQuantity).Sum() ?? 0,
                     Status = p.Status,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
@@ -66,7 +84,8 @@ namespace EcommerceManagement.Service.Services
                             Price = v.Price,
                             StockQuantity = v.StockQuantity,
                             OriginalStockQuantity = v.StockQuantity,
-                            ProductId = v.ProductId
+                            ProductId = v.ProductId,
+                            ImagePath = v.ImagePath
                         })
                         .ToList()
                 })
@@ -75,16 +94,60 @@ namespace EcommerceManagement.Service.Services
             if (model == null)
                 return null;
 
-            // Sản phẩm cũ chưa có variant sẽ được chuyển thành một variant mặc định khi Edit.
+            var productSelections = await _unitOfWork.ProductAttributeSelections
+                .BuildQuery(s => s.ProductId == id)
+                .Select(s => new
+                {
+                    s.AttributeDefinitionId,
+                    s.AttributeValueId
+                })
+                .ToListAsync();
+
+            model.ProductAttributes = productSelections
+                .GroupBy(s => s.AttributeDefinitionId)
+                .Select(g => new ProductAttributeInputViewModel
+                {
+                    DefinitionId = g.Key,
+                    SelectedValueIds = g.Select(x => x.AttributeValueId).Distinct().ToList()
+                })
+                .ToList();
+
+            var variantSelections = await _unitOfWork.ProductVariantAttributeSelections
+                .BuildQuery(s => s.ProductVariant.ProductId == id)
+                .Select(s => new
+                {
+                    s.ProductVariantId,
+                    s.AttributeDefinitionId,
+                    s.AttributeValueId
+                })
+                .ToListAsync();
+
+            var selectionsByVariant = variantSelections
+                .GroupBy(s => s.ProductVariantId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.AttributeValueId).Distinct().ToList());
+
+            foreach (var variant in model.Variants)
+            {
+                if (selectionsByVariant.TryGetValue(variant.Id, out var valueIds))
+                    variant.AttributeValueIds = valueIds;
+            }
+
+            model.VariantAttributes = variantSelections
+                .GroupBy(s => s.AttributeDefinitionId)
+                .Select(g => new ProductAttributeInputViewModel
+                {
+                    DefinitionId = g.Key,
+                    SelectedValueIds = g.Select(x => x.AttributeValueId).Distinct().ToList()
+                })
+                .ToList();
+
             if (model.Variants.Count == 0)
             {
                 model.Variants.Add(new ProductVariantViewModel
                 {
                     Name = "Mặc định",
-                    SKU = model.SKU,
-                    Price = model.Price,
-                    StockQuantity = model.StockQuantity,
-                    OriginalStockQuantity = model.StockQuantity,
                     ProductId = model.Id
                 });
             }
@@ -104,34 +167,51 @@ namespace EcommerceManagement.Service.Services
             if (!categoryExists)
                 throw new InvalidOperationException("Danh mục không tồn tại.");
 
+            var productSelections = await ValidateProductSelectionsAsync(model.ProductAttributes, model.CategoryId);
             var variants = NormalizeVariants(model.Variants);
 
-            await ValidateVariantsAsync(variants, null);
-
-            int totalStock = CalculateTotalStock(variants);
-            decimal minimumPrice = variants.Min(v => v.Price);
-            string firstSku = variants.First().SKU;
+            await PrepareAndValidateVariantsAsync(variants, null, model.CategoryId);
 
             var product = new Product
             {
                 Name = model.Name.Trim(),
-                SKU = firstSku,
-                Price = minimumPrice,
-                StockQuantity = totalStock,
                 Status = model.Status,
                 CategoryId = model.CategoryId,
                 ImagePath = model.ImagePath
             };
 
-            foreach (var variant in variants)
+            foreach (var selection in productSelections)
             {
-                product.Variants.Add(new ProductVariant
+                product.AttributeSelections.Add(new ProductAttributeSelection
                 {
-                    Name = variant.Name,
-                    SKU = variant.SKU,
-                    Price = variant.Price,
-                    StockQuantity = variant.StockQuantity
+                    AttributeDefinitionId = selection.DefinitionId,
+                    AttributeValueId = selection.ValueId
                 });
+            }
+
+            foreach (var variantModel in variants)
+            {
+                var variant = new ProductVariant
+                {
+                    Name = variantModel.Name,
+                    SKU = variantModel.SKU,
+                    Price = variantModel.Price,
+                    StockQuantity = variantModel.StockQuantity,
+                    ImagePath = variantModel.ImagePath
+                };
+
+                foreach (var valueId in variantModel.AttributeValueIds.Distinct())
+                {
+                    var info = await GetAttributeValueInfoAsync(valueId);
+
+                    variant.AttributeSelections.Add(new ProductVariantAttributeSelection
+                    {
+                        AttributeDefinitionId = info.DefinitionId,
+                        AttributeValueId = info.ValueId
+                    });
+                }
+
+                product.Variants.Add(variant);
             }
 
             await _unitOfWork.Products.AddAsync(product);
@@ -154,9 +234,6 @@ namespace EcommerceManagement.Service.Services
             if (product == null)
                 throw new InvalidOperationException("Sản phẩm không tồn tại.");
 
-            if (product.StockQuantity != model.OriginalStockQuantity)
-                throw new InvalidOperationException("Tồn kho sản phẩm đã thay đổi trong lúc bạn chỉnh sửa. Vui lòng tải lại trang và thử lại.");
-
             if (string.IsNullOrWhiteSpace(model.Name))
                 throw new InvalidOperationException("Tên sản phẩm không được để trống.");
 
@@ -167,9 +244,27 @@ namespace EcommerceManagement.Service.Services
             if (!categoryExists)
                 throw new InvalidOperationException("Danh mục không tồn tại.");
 
+            var productSelections = await ValidateProductSelectionsAsync(model.ProductAttributes, model.CategoryId);
             var variants = NormalizeVariants(model.Variants);
 
-            await ValidateVariantsAsync(variants, model.Id);
+            await PrepareAndValidateVariantsAsync(variants, model.Id, model.CategoryId);
+
+            var existingProductSelections = await _unitOfWork.ProductAttributeSelections
+                .BuildQuery(s => s.ProductId == model.Id)
+                .ToListAsync();
+
+            foreach (var selection in existingProductSelections)
+                _unitOfWork.ProductAttributeSelections.Delete(selection);
+
+            foreach (var selection in productSelections)
+            {
+                await _unitOfWork.ProductAttributeSelections.AddAsync(new ProductAttributeSelection
+                {
+                    ProductId = product.Id,
+                    AttributeDefinitionId = selection.DefinitionId,
+                    AttributeValueId = selection.ValueId
+                });
+            }
 
             var existingVariantIds = await _unitOfWork.ProductVariants
                 .BuildQuery(v => v.ProductId == model.Id)
@@ -189,6 +284,20 @@ namespace EcommerceManagement.Service.Services
                 if (postedVariantIds.Contains(existingId))
                     continue;
 
+                bool variantHasOrders = await _unitOfWork.OrderItems
+                    .BuildQuery(i => i.ProductVariantId == existingId)
+                    .AnyAsync();
+
+                if (variantHasOrders)
+                    throw new InvalidOperationException("Biến thể đã phát sinh đơn hàng nên không thể xóa.");
+
+                var oldSelections = await _unitOfWork.ProductVariantAttributeSelections
+                    .BuildQuery(s => s.ProductVariantId == existingId)
+                    .ToListAsync();
+
+                foreach (var selection in oldSelections)
+                    _unitOfWork.ProductVariantAttributeSelections.Delete(selection);
+
                 var variantToDelete = await _unitOfWork.ProductVariants.GetByIdAsync(existingId);
 
                 if (variantToDelete != null)
@@ -199,15 +308,28 @@ namespace EcommerceManagement.Service.Services
             {
                 if (variantModel.Id == 0)
                 {
-                    await _unitOfWork.ProductVariants.AddAsync(new ProductVariant
+                    var newVariant = new ProductVariant
                     {
                         ProductId = product.Id,
                         Name = variantModel.Name,
                         SKU = variantModel.SKU,
                         Price = variantModel.Price,
-                        StockQuantity = variantModel.StockQuantity
-                    });
+                        StockQuantity = variantModel.StockQuantity,
+                        ImagePath = variantModel.ImagePath
+                    };
 
+                    foreach (var valueId in variantModel.AttributeValueIds.Distinct())
+                    {
+                        var info = await GetAttributeValueInfoAsync(valueId);
+
+                        newVariant.AttributeSelections.Add(new ProductVariantAttributeSelection
+                        {
+                            AttributeDefinitionId = info.DefinitionId,
+                            AttributeValueId = info.ValueId
+                        });
+                    }
+
+                    await _unitOfWork.ProductVariants.AddAsync(newVariant);
                     continue;
                 }
 
@@ -219,16 +341,33 @@ namespace EcommerceManagement.Service.Services
                 if (variant.StockQuantity != variantModel.OriginalStockQuantity)
                     throw new InvalidOperationException($"Tồn kho biến thể {variant.Name} đã thay đổi. Vui lòng tải lại trang và thử lại.");
 
+                var oldSelections = await _unitOfWork.ProductVariantAttributeSelections
+                    .BuildQuery(s => s.ProductVariantId == variant.Id)
+                    .ToListAsync();
+
+                foreach (var selection in oldSelections)
+                    _unitOfWork.ProductVariantAttributeSelections.Delete(selection);
+
+                foreach (var valueId in variantModel.AttributeValueIds.Distinct())
+                {
+                    var info = await GetAttributeValueInfoAsync(valueId);
+
+                    await _unitOfWork.ProductVariantAttributeSelections.AddAsync(new ProductVariantAttributeSelection
+                    {
+                        ProductVariantId = variant.Id,
+                        AttributeDefinitionId = info.DefinitionId,
+                        AttributeValueId = info.ValueId
+                    });
+                }
+
                 variant.Name = variantModel.Name;
                 variant.SKU = variantModel.SKU;
                 variant.Price = variantModel.Price;
                 variant.StockQuantity = variantModel.StockQuantity;
+                variant.ImagePath = variantModel.ImagePath;
             }
 
             product.Name = model.Name.Trim();
-            product.SKU = variants.First().SKU;
-            product.Price = variants.Min(v => v.Price);
-            product.StockQuantity = CalculateTotalStock(variants);
             product.Status = model.Status;
             product.CategoryId = model.CategoryId;
             product.ImagePath = model.ImagePath;
@@ -292,7 +431,7 @@ namespace EcommerceManagement.Service.Services
                 throw new InvalidOperationException("Sản phẩm không tồn tại.");
 
             bool hasOrders = await _unitOfWork.OrderItems
-                .BuildQuery(item => item.ProductId == id)
+                .BuildQuery(item => item.ProductVariant.ProductId == id)
                 .AnyAsync();
 
             if (hasOrders)
@@ -323,7 +462,6 @@ namespace EcommerceManagement.Service.Services
 
                 query = query.Where(p =>
                     p.Name.Contains(searchTerm) ||
-                    p.SKU.Contains(searchTerm) ||
                     p.Variants.Any(v => v.SKU.Contains(searchTerm)));
             }
 
@@ -344,9 +482,9 @@ namespace EcommerceManagement.Service.Services
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    SKU = p.SKU,
-                    Price = p.Variants.Any() ? p.Variants.Min(v => v.Price) : p.Price,
-                    StockQuantity = p.Variants.Any() ? p.Variants.Sum(v => v.StockQuantity) : p.StockQuantity,
+                    MinPrice = p.Variants.Select(v => (decimal?)v.Price).Min() ?? 0m,
+                    MaxPrice = p.Variants.Select(v => (decimal?)v.Price).Max() ?? 0m,
+                    TotalStockQuantity = p.Variants.Select(v => (int?)v.StockQuantity).Sum() ?? 0,
                     Status = p.Status,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
@@ -372,10 +510,10 @@ namespace EcommerceManagement.Service.Services
             var result = variants
                 .Where(v =>
                     v.Id > 0 ||
-                    !string.IsNullOrWhiteSpace(v.Name) ||
                     !string.IsNullOrWhiteSpace(v.SKU) ||
                     v.Price != 0 ||
-                    v.StockQuantity != 0)
+                    v.StockQuantity != 0 ||
+                    v.AttributeValueIds.Count > 0)
                 .ToList();
 
             if (result.Count == 0)
@@ -383,35 +521,138 @@ namespace EcommerceManagement.Service.Services
 
             foreach (var variant in result)
             {
-                variant.Name = variant.Name.Trim();
                 variant.SKU = variant.SKU.Trim();
+                variant.AttributeValueIds = variant.AttributeValueIds.Distinct().OrderBy(id => id).ToList();
             }
 
             return result;
         }
 
-        private async Task ValidateVariantsAsync(List<ProductVariantViewModel> variants, int? productId)
+        private async Task<List<SelectionInfo>> ValidateProductSelectionsAsync(
+            List<ProductAttributeInputViewModel>? inputs,
+            int categoryId)
         {
-            var duplicateSku = variants
-                .GroupBy(v => v.SKU, StringComparer.OrdinalIgnoreCase)
-                .FirstOrDefault(g => g.Count() > 1);
+            inputs ??= new List<ProductAttributeInputViewModel>();
 
-            if (duplicateSku != null)
-                throw new InvalidOperationException($"SKU {duplicateSku.Key} đang bị trùng giữa các biến thể.");
+            var rules = await GetCategoryRulesAsync(categoryId);
+            var productRules = rules
+                .Where(r => r.UseForProduct)
+                .ToDictionary(r => r.DefinitionId);
+
+            var selectedByDefinition = inputs
+                .GroupBy(i => i.DefinitionId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.SelectMany(x => x.SelectedValueIds).Distinct().ToList());
+
+            foreach (var selected in selectedByDefinition.Where(x => x.Value.Count > 0))
+            {
+                if (!productRules.ContainsKey(selected.Key))
+                    throw new InvalidOperationException("Có thuộc tính thông tin chung không thuộc danh mục đã chọn.");
+            }
+
+            foreach (var requiredRule in productRules.Values.Where(r => r.IsRequired))
+            {
+                if (!selectedByDefinition.TryGetValue(requiredRule.DefinitionId, out var selectedIds) || selectedIds.Count == 0)
+                    throw new InvalidOperationException($"Thuộc tính {requiredRule.DefinitionName} là bắt buộc.");
+            }
+
+            var result = new List<SelectionInfo>();
+
+            foreach (var rule in productRules.Values)
+            {
+                if (!selectedByDefinition.TryGetValue(rule.DefinitionId, out var selectedIds) || selectedIds.Count == 0)
+                    continue;
+
+                var definition = await _unitOfWork.ProductAttributeDefinitions.GetByIdAsync(rule.DefinitionId);
+
+                if (definition == null || !definition.IsActive || !definition.CanUseForProduct)
+                    throw new InvalidOperationException($"Thuộc tính {rule.DefinitionName} không hợp lệ.");
+
+                if (!definition.AllowMultipleProductValues && selectedIds.Count > 1)
+                    throw new InvalidOperationException($"Thuộc tính {definition.Name} chỉ được chọn một giá trị.");
+
+                foreach (var valueId in selectedIds)
+                {
+                    var info = await GetAttributeValueInfoAsync(valueId);
+
+                    if (info.DefinitionId != definition.Id || !info.IsActive)
+                        throw new InvalidOperationException($"Giá trị của thuộc tính {definition.Name} không hợp lệ.");
+
+                    result.Add(new SelectionInfo
+                    {
+                        DefinitionId = definition.Id,
+                        ValueId = info.ValueId
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        private async Task PrepareAndValidateVariantsAsync(
+            List<ProductVariantViewModel> variants,
+            int? productId,
+            int categoryId)
+        {
+            var rules = await GetCategoryRulesAsync(categoryId);
+            var variantRules = rules
+                .Where(r => r.UseForVariant)
+                .ToDictionary(r => r.DefinitionId);
+
+            var combinationKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var variant in variants)
             {
-                if (string.IsNullOrWhiteSpace(variant.Name))
-                    throw new InvalidOperationException("Tên biến thể không được để trống.");
-
                 if (string.IsNullOrWhiteSpace(variant.SKU))
                     throw new InvalidOperationException("SKU biến thể không được để trống.");
 
                 if (variant.Price <= 0)
-                    throw new InvalidOperationException($"Giá của biến thể {variant.Name} phải lớn hơn 0.");
+                    throw new InvalidOperationException("Giá biến thể phải lớn hơn 0.");
 
                 if (variant.StockQuantity < 0)
-                    throw new InvalidOperationException($"Tồn kho của biến thể {variant.Name} không được âm.");
+                    throw new InvalidOperationException("Tồn kho biến thể không được âm.");
+
+                var infos = new List<AttributeValueInfo>();
+
+                foreach (var valueId in variant.AttributeValueIds.Distinct())
+                {
+                    var info = await GetAttributeValueInfoAsync(valueId);
+
+                    if (!info.IsActive || !variantRules.ContainsKey(info.DefinitionId))
+                        throw new InvalidOperationException("Có giá trị thuộc tính biến thể không thuộc danh mục đã chọn.");
+
+                    infos.Add(info);
+                }
+
+                var duplicatedDefinition = infos
+                    .GroupBy(i => i.DefinitionId)
+                    .FirstOrDefault(g => g.Count() > 1);
+
+                if (duplicatedDefinition != null)
+                    throw new InvalidOperationException($"Một biến thể không thể có nhiều giá trị cho thuộc tính {duplicatedDefinition.First().DefinitionName}.");
+
+                foreach (var requiredRule in variantRules.Values.Where(r => r.IsRequired))
+                {
+                    if (!infos.Any(i => i.DefinitionId == requiredRule.DefinitionId))
+                        throw new InvalidOperationException($"Mỗi biến thể phải có giá trị cho thuộc tính {requiredRule.DefinitionName}.");
+                }
+
+                infos = infos
+                    .OrderBy(i => variantRules[i.DefinitionId].DisplayOrder)
+                    .ThenBy(i => i.DefinitionName)
+                    .ToList();
+
+                variant.Name = infos.Count == 0
+                    ? "Mặc định"
+                    : string.Join(" / ", infos.Select(i => i.Value));
+
+                string combinationKey = infos.Count == 0
+                    ? "default"
+                    : string.Join("|", infos.Select(i => $"{i.DefinitionId}:{i.ValueId}"));
+
+                if (!combinationKeys.Add(combinationKey))
+                    throw new InvalidOperationException($"Biến thể {variant.Name} đang bị trùng.");
 
                 bool variantSkuExists = await _unitOfWork.ProductVariants
                     .BuildQuery(v => v.SKU == variant.SKU && v.Id != variant.Id)
@@ -419,24 +660,71 @@ namespace EcommerceManagement.Service.Services
 
                 if (variantSkuExists)
                     throw new InvalidOperationException($"SKU {variant.SKU} đã tồn tại.");
-
-                bool legacyProductSkuExists = await _unitOfWork.Products
-                    .BuildQuery(p => p.SKU == variant.SKU && (!productId.HasValue || p.Id != productId.Value))
-                    .AnyAsync();
-
-                if (legacyProductSkuExists)
-                    throw new InvalidOperationException($"SKU {variant.SKU} đã được sử dụng bởi sản phẩm khác.");
             }
         }
 
-        private int CalculateTotalStock(List<ProductVariantViewModel> variants)
+        private async Task<List<CategoryAttributeRule>> GetCategoryRulesAsync(int categoryId)
         {
-            long total = variants.Sum(v => (long)v.StockQuantity);
+            return await _unitOfWork.CategoryAttributeDefinitions
+                .BuildQuery(x => x.CategoryId == categoryId && x.AttributeDefinition.IsActive)
+                .Select(x => new CategoryAttributeRule
+                {
+                    DefinitionId = x.AttributeDefinitionId,
+                    DefinitionName = x.AttributeDefinition.Name,
+                    UseForProduct = x.UseForProduct,
+                    UseForVariant = x.UseForVariant,
+                    IsRequired = x.IsRequired,
+                    DisplayOrder = x.DisplayOrder
+                })
+                .ToListAsync();
+        }
 
-            if (total > int.MaxValue)
-                throw new InvalidOperationException("Tổng tồn kho vượt quá giới hạn cho phép.");
+        private async Task<AttributeValueInfo> GetAttributeValueInfoAsync(int valueId)
+        {
+            var info = await _unitOfWork.ProductAttributeValues
+                .BuildQuery(v => v.Id == valueId)
+                .Select(v => new AttributeValueInfo
+                {
+                    ValueId = v.Id,
+                    Value = v.Value,
+                    IsActive = v.IsActive,
+                    DefinitionId = v.AttributeDefinitionId,
+                    DefinitionName = v.AttributeDefinition.Name,
+                    DefinitionDisplayOrder = v.AttributeDefinition.DisplayOrder,
+                    CanUseForVariant = v.AttributeDefinition.CanUseForVariant
+                })
+                .FirstOrDefaultAsync();
 
-            return (int)total;
+            if (info == null)
+                throw new InvalidOperationException("Giá trị thuộc tính không tồn tại.");
+
+            return info;
+        }
+        private sealed class CategoryAttributeRule
+        {
+            public int DefinitionId { get; set; }
+            public string DefinitionName { get; set; } = string.Empty;
+            public bool UseForProduct { get; set; }
+            public bool UseForVariant { get; set; }
+            public bool IsRequired { get; set; }
+            public int DisplayOrder { get; set; }
+        }
+
+        private sealed class SelectionInfo
+        {
+            public int DefinitionId { get; set; }
+            public int ValueId { get; set; }
+        }
+
+        private sealed class AttributeValueInfo
+        {
+            public int ValueId { get; set; }
+            public string Value { get; set; } = string.Empty;
+            public bool IsActive { get; set; }
+            public int DefinitionId { get; set; }
+            public string DefinitionName { get; set; } = string.Empty;
+            public int DefinitionDisplayOrder { get; set; }
+            public bool CanUseForVariant { get; set; }
         }
     }
 }

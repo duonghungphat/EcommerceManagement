@@ -1,4 +1,5 @@
-@model EcommerceManagement.Core.ViewModels.OrderCreateViewModel
+@model OrderCreateViewModel
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "Tạo đơn hàng";
@@ -6,1108 +7,389 @@
 
 <div class="page-heading mb-4">
     <h3 class="mb-1">Tạo đơn hàng</h3>
-    <p class="text-muted mb-0">
-        Chọn khách hàng và các sản phẩm cần đặt.
-    </p>
+    <p class="text-muted mb-0">Chọn khách hàng và biến thể sản phẩm cần đặt.</p>
 </div>
 
 <div class="card order-create-card">
     <div class="card-body">
+        <form id="orderForm" asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <form id="orderForm"
-              asp-action="Create"
-              method="post">
-
-            <div asp-validation-summary="ModelOnly"
-                 class="text-danger mb-3">
-            </div>
-
-            <!-- Khách hàng -->
             <div class="mb-3">
-
-                <label asp-for="CustomerId"
-                       class="form-label">
-                    Khách hàng
-                </label>
+                <label asp-for="CustomerId" class="form-label">Khách hàng</label>
 
                 <div class="d-flex gap-2">
-
-                    <select asp-for="CustomerId"
-                            class="form-select">
-
-                        <option value="">
-                            -- Chọn khách hàng --
-                        </option>
+                    <select asp-for="CustomerId" class="form-select">
+                        <option value="">-- Chọn khách hàng --</option>
 
                         @foreach (var customer in Model.Customers)
                         {
-                            <option value="@customer.Id">
-                                @customer.FullName - @customer.PhoneNumber
-                            </option>
+                            <option value="@customer.Id">@customer.FullName - @customer.PhoneNumber</option>
                         }
-
                     </select>
 
-                    <button type="button"
-                            class="btn btn-success text-nowrap"
-                            data-bs-toggle="modal"
-                            data-bs-target="#quickCustomerModal">
+                    <button type="button" class="btn btn-success text-nowrap" data-bs-toggle="modal" data-bs-target="#quickCustomerModal">
                         Thêm khách hàng
                     </button>
-
                 </div>
 
-                <span asp-validation-for="CustomerId"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="CustomerId" class="text-danger"></span>
             </div>
 
-            <!-- Ghi chú -->
             <div class="mb-3">
-
-                <label asp-for="Note"
-                       class="form-label">
-                    Ghi chú
-                </label>
-
-                <textarea asp-for="Note"
-                          class="form-control"
-                          rows="3">
-                </textarea>
-
-                <span asp-validation-for="Note"
-                      class="text-danger">
-                </span>
-
+                <label asp-for="Note" class="form-label">Ghi chú</label>
+                <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Note" class="text-danger"></span>
             </div>
 
             <hr />
 
-            <!-- Sản phẩm -->
             <div class="d-flex justify-content-between align-items-center mb-2">
-
                 <h4>Sản phẩm</h4>
-
-                <button type="button"
-                        id="addProductButton"
-                        class="btn btn-success">
-                    Thêm dòng sản phẩm
-                </button>
-
+                <button type="button" id="addProductButton" class="btn btn-success">Thêm dòng sản phẩm</button>
             </div>
 
             <div id="orderItems">
-
                 @for (int i = 0; i < Model.Items.Count; i++)
                 {
                     <div class="order-item row g-2 mb-3">
-
-                        <!-- Sản phẩm -->
                         <div class="col-md-5">
+                            <label class="form-label">Sản phẩm / biến thể</label>
 
-                            <label class="form-label">
-                                Sản phẩm
-                            </label>
+                            <select asp-for="Items[i].ProductVariantId" class="form-select variant-select">
+                                <option value="">-- Chọn biến thể sản phẩm --</option>
 
-                            <select asp-for="Items[i].ProductId"
-                                    class="form-select product-select">
-
-                                <option value="">
-                                    -- Chọn sản phẩm --
-                                </option>
-
-                                @foreach (var product in Model.Products)
+                                @foreach (var variant in Model.ProductVariants)
                                 {
-                                    <option value="@product.Id"
-                                            data-price="@product.Price"
-                                            data-stock="@product.StockQuantity">
-
-                                        @product.Name -
-                                        @product.Price.ToString("N0") đ -
-                                        Tồn: @product.StockQuantity
-
+                                    <option value="@variant.Id"
+                                            data-price="@variant.Price"
+                                            data-stock="@variant.StockQuantity">
+                                        @variant.ProductName - @variant.VariantName (@variant.SKU) - @variant.Price.ToString("N0") đ - Tồn: @variant.StockQuantity
                                     </option>
                                 }
-
                             </select>
 
-                            <span asp-validation-for="Items[i].ProductId"
-                                  class="text-danger product-error">
-                            </span>
-
+                            <span asp-validation-for="Items[i].ProductVariantId" class="text-danger variant-error"></span>
                         </div>
 
-                        <!-- Số lượng -->
                         <div class="col-md-2">
-
-                            <label class="form-label">
-                                Số lượng
-                            </label>
-
-                            <input asp-for="Items[i].Quantity"
-                                   type="number"
-                                   min="1"
-                                   class="form-control quantity-input" />
-
-                            <span asp-validation-for="Items[i].Quantity"
-                                  class="text-danger quantity-error">
-                            </span>
-
+                            <label class="form-label">Số lượng</label>
+                            <input asp-for="Items[i].Quantity" type="number" min="1" class="form-control quantity-input" />
+                            <span asp-validation-for="Items[i].Quantity" class="text-danger quantity-error"></span>
                         </div>
 
-                        <!-- Đơn giá -->
                         <div class="col-md-2">
-
-                            <label class="form-label">
-                                Đơn giá
-                            </label>
-
-                            <input type="text"
-                                   class="form-control unit-price"
-                                   readonly />
-
+                            <label class="form-label">Đơn giá</label>
+                            <input type="text" class="form-control unit-price" readonly />
                         </div>
 
-                        <!-- Thành tiền -->
                         <div class="col-md-2">
-
-                            <label class="form-label">
-                                Thành tiền
-                            </label>
-
-                            <input type="text"
-                                   class="form-control line-total"
-                                   readonly />
-
+                            <label class="form-label">Thành tiền</label>
+                            <input type="text" class="form-control line-total" readonly />
                         </div>
 
-                        <!-- Xóa -->
                         <div class="col-md-1 d-flex align-items-end">
-
-                            <button type="button"
-                                    class="btn btn-danger remove-item">
-                                Xóa
-                            </button>
-
+                            <button type="button" class="btn btn-danger remove-item">Xóa</button>
                         </div>
-
                     </div>
                 }
-
             </div>
 
             <hr />
 
-            <!-- Tổng tiền -->
             <div class="text-end mb-3">
-
                 <strong>Tổng tiền:</strong>
-
-                <span id="orderTotal"
-                      class="fs-5">
-                    0 đ
-                </span>
-
+                <span id="orderTotal" class="fs-5">0 đ</span>
             </div>
 
-            <button type="submit"
-                    class="btn btn-primary">
-                Tạo đơn hàng
-            </button>
-
-            <a asp-action="Index"
-               class="btn btn-secondary">
-                Quay lại
-            </a>
-
+            <button type="submit" class="btn btn-primary">Tạo đơn hàng</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
         </form>
-
     </div>
 </div>
 
-
-<!-- ================================================= -->
-<!-- MODAL THÊM NHANH KHÁCH HÀNG                         -->
-<!-- ================================================= -->
-
-<div class="modal fade"
-     id="quickCustomerModal"
-     tabindex="-1"
-     aria-labelledby="quickCustomerModalLabel"
-     aria-hidden="true">
-
+<div class="modal fade" id="quickCustomerModal" tabindex="-1" aria-labelledby="quickCustomerModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-
         <div class="modal-content">
-
-            <form id="quickCustomerForm"
-                  asp-area="Management"
-                  asp-controller="Customer"
-                  asp-action="QuickCreate"
-                  method="post">
-
+            <form id="quickCustomerForm" asp-area="Management" asp-controller="Customer" asp-action="QuickCreate" method="post">
                 <div class="modal-header">
-
-                    <h5 class="modal-title"
-                        id="quickCustomerModalLabel">
-                        Thêm khách hàng
-                    </h5>
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Đóng">
-                    </button>
-
+                    <h5 class="modal-title" id="quickCustomerModalLabel">Thêm khách hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
 
                 <div class="modal-body">
+                    <div id="quickCustomerError" class="alert alert-danger d-none"></div>
 
-                    <div id="quickCustomerError"
-                         class="alert alert-danger d-none">
-                    </div>
-
-                    <!-- Họ tên -->
                     <div class="mb-3">
-
-                        <label class="form-label">
-                            Tên khách hàng
-                        </label>
-
-                        <input name="FullName"
-                               type="text"
-                               class="form-control"
-                               maxlength="100"
-                               required />
-
+                        <label class="form-label">Tên khách hàng</label>
+                        <input name="FullName" type="text" class="form-control" maxlength="100" required />
                     </div>
 
-                    <!-- Email -->
                     <div class="mb-3">
-
-                        <label class="form-label">
-                            Email
-                        </label>
-
-                        <input name="Email"
-                               type="email"
-                               class="form-control"
-                               maxlength="100"
-                               required />
-
+                        <label class="form-label">Email</label>
+                        <input name="Email" type="email" class="form-control" maxlength="100" required />
                     </div>
 
-                    <!-- SĐT -->
                     <div class="mb-3">
-
-                        <label class="form-label">
-                            Số điện thoại
-                        </label>
-
-                        <input name="PhoneNumber"
-                               type="text"
-                               class="form-control"
-                               maxlength="10"
-                               pattern="[0-9]{9,10}"
-                               required />
-
+                        <label class="form-label">Số điện thoại</label>
+                        <input name="PhoneNumber" type="text" class="form-control" maxlength="10" pattern="[0-9]{9,10}" required />
                     </div>
 
-                    <!-- Địa chỉ -->
                     <div class="mb-3">
-
-                        <label class="form-label">
-                            Địa chỉ
-                        </label>
-
-                        <input name="Address"
-                               type="text"
-                               class="form-control"
-                               maxlength="200"
-                               required />
-
+                        <label class="form-label">Địa chỉ</label>
+                        <input name="Address" type="text" class="form-control" maxlength="200" required />
                     </div>
-
                 </div>
 
                 <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Đóng
-                    </button>
-
-                    <button type="submit"
-                            class="btn btn-primary">
-                        Lưu khách hàng
-                    </button>
-
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu khách hàng</button>
                 </div>
-
             </form>
-
         </div>
-
     </div>
-
 </div>
 
-
 @section Scripts {
-
     <partial name="_ValidationScriptsPartial" />
 
     <script>
+        const variants = @Html.Raw(JsonSerializer.Serialize(Model.ProductVariants.Select(v => new
+        {
+                id = v.Id,
+                productName = v.ProductName,
+                variantName = v.VariantName,
+                sku = v.SKU,
+                price = v.Price,
+                stock = v.StockQuantity
+        })));
 
-        // =====================================================
-        // ORDER
-        // =====================================================
-
-        const orderItemsContainer =
-            document.getElementById("orderItems");
-
-        const addProductButton =
-            document.getElementById("addProductButton");
-
-
-        // Danh sách sản phẩm dùng cho các dòng tạo bằng JavaScript
-        const products = [
-
-            @foreach (var product in Model.Products)
-            {
-                    <text>
-                    {
-                        id: @product.Id,
-                        name: @Html.Raw(
-                                                System.Text.Json.JsonSerializer.Serialize(
-                                                        product.Name
-                                                )
-                                        ),
-                price: @product.Price.ToString(
-                                        System.Globalization.CultureInfo.InvariantCulture
-                                ),
-                stock: @product.StockQuantity
-            },
-            </text>
-                }
-
-        ];
-
-
-        // =====================================================
-        // FORMAT TIỀN
-        // =====================================================
+    const orderItemsContainer = document.getElementById("orderItems");
+    const addProductButton = document.getElementById("addProductButton");
 
         function formatMoney(value) {
-
-            return new Intl.NumberFormat("vi-VN")
-                .format(value) + " đ";
+            return new Intl.NumberFormat("vi-VN").format(value) + " đ";
         }
 
-
-        // =====================================================
-        // TẠO OPTION PRODUCT
-        // =====================================================
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
 
         function createOptions() {
+            let html = '<option value="">-- Chọn biến thể sản phẩm --</option>';
 
-            let html =
-                '<option value="">-- Chọn sản phẩm --</option>';
+            variants.forEach(variant => {
+                const label = `${variant.productName} - ${variant.variantName} (${variant.sku}) - ${formatMoney(variant.price)} - Tồn: ${variant.stock}`;
 
-            products.forEach(product => {
-
-                html += `
-                    <option value="${product.id}"
-                            data-price="${product.price}"
-                            data-stock="${product.stock}">
-                        ${product.name}
-                        - ${formatMoney(product.price)}
-                        - Tồn: ${product.stock}
-                    </option>`;
+                html += `<option value="${variant.id}" data-price="${variant.price}" data-stock="${variant.stock}">${escapeHtml(label)}</option>`;
             });
 
             return html;
         }
 
-
-        // =====================================================
-        // REFRESH VALIDATION
-        // =====================================================
-
         function refreshValidation() {
-
             const form = $("#orderForm");
-
             form.removeData("validator");
             form.removeData("unobtrusiveValidation");
-
             $.validator.unobtrusive.parse(form);
         }
 
-
-        // =====================================================
-        // ĐÁNH LẠI INDEX CHO ORDER ITEM
-        // =====================================================
-
         function renumberItems() {
+            document.querySelectorAll(".order-item").forEach((row, index) => {
+                const variant = row.querySelector(".variant-select");
+                const quantity = row.querySelector(".quantity-input");
+                const variantError = row.querySelector(".variant-error");
+                const quantityError = row.querySelector(".quantity-error");
 
-            const rows =
-                document.querySelectorAll(".order-item");
+                const variantName = `Items[${index}].ProductVariantId`;
+                const quantityName = `Items[${index}].Quantity`;
 
-            rows.forEach((row, index) => {
-
-                const product =
-                    row.querySelector(".product-select");
-
-                const quantity =
-                    row.querySelector(".quantity-input");
-
-                const productError =
-                    row.querySelector(".product-error");
-
-                const quantityError =
-                    row.querySelector(".quantity-error");
-
-
-                const productName =
-                    `Items[${index}].ProductId`;
-
-                const quantityName =
-                    `Items[${index}].Quantity`;
-
-
-                product.name = productName;
-                product.id =
-                    `Items_${index}__ProductId`;
+                variant.name = variantName;
+                variant.id = `Items_${index}__ProductVariantId`;
 
                 quantity.name = quantityName;
-                quantity.id =
-                    `Items_${index}__Quantity`;
+                quantity.id = `Items_${index}__Quantity`;
 
-
-                if (productError) {
-
-                    productError.setAttribute(
-                        "data-valmsg-for",
-                        productName
-                    );
-                }
-
-
-                if (quantityError) {
-
-                    quantityError.setAttribute(
-                        "data-valmsg-for",
-                        quantityName
-                    );
-                }
-
+                variantError?.setAttribute("data-valmsg-for", variantName);
+                quantityError?.setAttribute("data-valmsg-for", quantityName);
             });
 
             refreshValidation();
         }
 
+        function updateTotal() {
+            let total = 0;
 
-        // =====================================================
-        // UPDATE MỘT DÒNG
-        // =====================================================
+            document.querySelectorAll(".order-item").forEach(row => {
+                const selectedOption = row.querySelector(".variant-select").selectedOptions[0];
+                const price = parseFloat(selectedOption?.dataset.price || 0);
+                const quantity = parseInt(row.querySelector(".quantity-input").value || 0);
+
+                total += price * quantity;
+            });
+
+            document.getElementById("orderTotal").textContent = formatMoney(total);
+        }
 
         function updateRow(row) {
+            const selectedOption = row.querySelector(".variant-select").selectedOptions[0];
+            const price = parseFloat(selectedOption?.dataset.price || 0);
+            const quantity = parseInt(row.querySelector(".quantity-input").value || 0);
 
-            const productSelect =
-                row.querySelector(".product-select");
-
-            const quantityInput =
-                row.querySelector(".quantity-input");
-
-            const unitPriceInput =
-                row.querySelector(".unit-price");
-
-            const lineTotalInput =
-                row.querySelector(".line-total");
-
-
-            const selectedOption =
-                productSelect.options[
-                    productSelect.selectedIndex
-                ];
-
-
-            const price = parseFloat(
-                selectedOption?.dataset.price || 0
-            );
-
-
-            const quantity = parseInt(
-                quantityInput.value || 0
-            );
-
-
-            unitPriceInput.value =
-                formatMoney(price);
-
-            lineTotalInput.value =
-                formatMoney(price * quantity);
-
+            row.querySelector(".unit-price").value = formatMoney(price);
+            row.querySelector(".line-total").value = formatMoney(price * quantity);
 
             updateTotal();
         }
 
-
-        // =====================================================
-        // UPDATE TỔNG TIỀN
-        // =====================================================
-
-        function updateTotal() {
-
-            let total = 0;
-
-
-            document
-                .querySelectorAll(".order-item")
-                .forEach(row => {
-
-                    const productSelect =
-                        row.querySelector(
-                            ".product-select"
-                        );
-
-                    const quantityInput =
-                        row.querySelector(
-                            ".quantity-input"
-                        );
-
-
-                    const selectedOption =
-                        productSelect.options[
-                            productSelect.selectedIndex
-                        ];
-
-
-                    const price = parseFloat(
-                        selectedOption?.dataset.price || 0
-                    );
-
-
-                    const quantity = parseInt(
-                        quantityInput.value || 0
-                    );
-
-
-                    total += price * quantity;
-
-                });
-
-
-            document.getElementById(
-                "orderTotal"
-            ).textContent = formatMoney(total);
-        }
-
-
-        // =====================================================
-        // GẮN EVENT CHO MỘT DÒNG PRODUCT
-        // =====================================================
-
         function bindRow(row) {
+            row.querySelector(".variant-select").addEventListener("change", () => updateRow(row));
+            row.querySelector(".quantity-input").addEventListener("input", () => updateRow(row));
 
-            const productSelect =
-                row.querySelector(".product-select");
+            row.querySelector(".remove-item").addEventListener("click", () => {
+                const rows = document.querySelectorAll(".order-item");
 
-            const quantityInput =
-                row.querySelector(".quantity-input");
-
-            const removeButton =
-                row.querySelector(".remove-item");
-
-
-            productSelect.addEventListener(
-                "change",
-                () => {
-
-                    updateRow(row);
+                if (rows.length <= 1) {
+                    alert("Đơn hàng phải có ít nhất một dòng sản phẩm.");
+                    return;
                 }
-            );
 
-
-            quantityInput.addEventListener(
-                "input",
-                () => {
-
-                    updateRow(row);
-                }
-            );
-
-
-            removeButton.addEventListener(
-                "click",
-                () => {
-
-                    const rows =
-                        document.querySelectorAll(
-                            ".order-item"
-                        );
-
-
-                    if (rows.length <= 1) {
-
-                        alert(
-                            "Đơn hàng phải có ít nhất một dòng sản phẩm."
-                        );
-
-                        return;
-                    }
-
-
-                    row.remove();
-
-                    renumberItems();
-
-                    updateTotal();
-                }
-            );
-
+                row.remove();
+                renumberItems();
+                updateTotal();
+            });
 
             updateRow(row);
         }
 
+        addProductButton.addEventListener("click", () => {
+            const index = document.querySelectorAll(".order-item").length;
+            const row = document.createElement("div");
 
-        // =====================================================
-        // THÊM DÒNG PRODUCT
-        // =====================================================
+            row.className = "order-item row g-2 mb-3";
+            row.innerHTML = `
+                <div class="col-md-5">
+                    <label class="form-label">Sản phẩm / biến thể</label>
 
-        addProductButton.addEventListener(
-            "click",
-            () => {
-
-                const index =
-                    document
-                        .querySelectorAll(
-                            ".order-item"
-                        )
-                        .length;
-
-
-                const row =
-                    document.createElement("div");
-
-
-                row.className =
-                    "order-item row g-2 mb-3";
-
-
-                row.innerHTML = `
-
-                    <div class="col-md-5">
-
-                        <label class="form-label">
-                            Sản phẩm
-                        </label>
-
-                        <select
-                            name="Items[${index}].ProductId"
-                            id="Items_${index}__ProductId"
-                            class="form-select product-select"
-
+                    <select name="Items[${index}].ProductVariantId"
+                            id="Items_${index}__ProductVariantId"
+                            class="form-select variant-select"
                             data-val="true"
-
-                            data-val-required=
-                            "Vui lòng chọn sản phẩm."
-
-                            data-val-range=
-                            "Vui lòng chọn sản phẩm."
-
+                            data-val-range="Vui lòng chọn biến thể sản phẩm."
                             data-val-range-min="1"
+                            data-val-range-max="2147483647">
+                        ${createOptions()}
+                    </select>
 
-                            data-val-range-max=
-                            "2147483647">
+                    <span class="text-danger variant-error field-validation-valid"
+                          data-valmsg-for="Items[${index}].ProductVariantId"
+                          data-valmsg-replace="true"></span>
+                </div>
 
-                            ${createOptions()}
+                <div class="col-md-2">
+                    <label class="form-label">Số lượng</label>
 
-                        </select>
+                    <input name="Items[${index}].Quantity"
+                           id="Items_${index}__Quantity"
+                           type="number"
+                           min="1"
+                           value="1"
+                           class="form-control quantity-input"
+                           data-val="true"
+                           data-val-range="Số lượng phải từ 1 trở lên."
+                           data-val-range-min="1"
+                           data-val-range-max="2147483647" />
 
-                        <span
-                            class=
-                            "text-danger product-error field-validation-valid"
+                    <span class="text-danger quantity-error field-validation-valid"
+                          data-valmsg-for="Items[${index}].Quantity"
+                          data-valmsg-replace="true"></span>
+                </div>
 
-                            data-valmsg-for=
-                            "Items[${index}].ProductId"
+                <div class="col-md-2">
+                    <label class="form-label">Đơn giá</label>
+                    <input type="text" class="form-control unit-price" readonly />
+                </div>
 
-                            data-valmsg-replace=
-                            "true">
-                        </span>
+                <div class="col-md-2">
+                    <label class="form-label">Thành tiền</label>
+                    <input type="text" class="form-control line-total" readonly />
+                </div>
 
-                    </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger remove-item">Xóa</button>
+                </div>`;
 
+            orderItemsContainer.appendChild(row);
+            bindRow(row);
+            refreshValidation();
+        });
 
-                    <div class="col-md-2">
-
-                        <label class="form-label">
-                            Số lượng
-                        </label>
-
-                        <input
-                            name="Items[${index}].Quantity"
-
-                            id=
-                            "Items_${index}__Quantity"
-
-                            type="number"
-
-                            min="1"
-
-                            value="1"
-
-                            class=
-                            "form-control quantity-input"
-
-                            data-val="true"
-
-                            data-val-required=
-                            "Vui lòng nhập số lượng."
-
-                            data-val-range=
-                            "Số lượng phải từ 1 trở lên."
-
-                            data-val-range-min="1"
-
-                            data-val-range-max=
-                            "2147483647" />
-
-                        <span
-                            class=
-                            "text-danger quantity-error field-validation-valid"
-
-                            data-valmsg-for=
-                            "Items[${index}].Quantity"
-
-                            data-valmsg-replace=
-                            "true">
-                        </span>
-
-                    </div>
-
-
-                    <div class="col-md-2">
-
-                        <label class="form-label">
-                            Đơn giá
-                        </label>
-
-                        <input type="text"
-                               class=
-                               "form-control unit-price"
-                               readonly />
-
-                    </div>
-
-
-                    <div class="col-md-2">
-
-                        <label class="form-label">
-                            Thành tiền
-                        </label>
-
-                        <input type="text"
-                               class=
-                               "form-control line-total"
-                               readonly />
-
-                    </div>
-
-
-                    <div class=
-                         "col-md-1 d-flex align-items-end">
-
-                        <button type="button"
-                                class=
-                                "btn btn-danger remove-item">
-                            Xóa
-                        </button>
-
-                    </div>
-                `;
-
-
-                orderItemsContainer.appendChild(row);
-
-                bindRow(row);
-
-                refreshValidation();
-            }
-        );
-
-
-        // =====================================================
-        // BIND CÁC DÒNG CÓ SẴN
-        // =====================================================
-
-        document
-            .querySelectorAll(".order-item")
-            .forEach(row => {
-
-                bindRow(row);
-            });
-
-
+        document.querySelectorAll(".order-item").forEach(row => bindRow(row));
         refreshValidation();
 
+        const quickCustomerForm = document.getElementById("quickCustomerForm");
+        const quickCustomerError = document.getElementById("quickCustomerError");
 
-        // =====================================================
-        // QUICK CREATE CUSTOMER
-        // =====================================================
+        quickCustomerForm.addEventListener("submit", async event => {
+            event.preventDefault();
 
-        const quickCustomerForm =
-            document.getElementById(
-                "quickCustomerForm"
-            );
+            quickCustomerError.classList.add("d-none");
+            quickCustomerError.textContent = "";
 
+            const submitButton = quickCustomerForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
 
-        const quickCustomerError =
-            document.getElementById(
-                "quickCustomerError"
-            );
+            try {
+                const response = await fetch(quickCustomerForm.action, {
+                    method: "POST",
+                    body: new FormData(quickCustomerForm)
+                });
 
+                const result = await response.json();
 
-        quickCustomerForm.addEventListener(
-            "submit",
-            async function (event) {
+                if (!response.ok) {
+                    const messages = [];
 
-                event.preventDefault();
+                    if (result.message)
+                        messages.push(result.message);
 
+                    if (result.errors)
+                        Object.values(result.errors).flat().forEach(error => messages.push(error));
 
-                quickCustomerError
-                    .classList
-                    .add("d-none");
-
-
-                quickCustomerError.textContent = "";
-
-
-                const submitButton =
-                    quickCustomerForm.querySelector(
-                        'button[type="submit"]'
-                    );
-
-
-                submitButton.disabled = true;
-
-
-                try {
-
-                    const response =
-                        await fetch(
-                            quickCustomerForm.action,
-                            {
-                                method: "POST",
-                                body: new FormData(
-                                    quickCustomerForm
-                                )
-                            }
-                        );
-
-
-                    const contentType =
-                        response.headers.get(
-                            "content-type"
-                        ) || "";
-
-
-                    let result;
-
-
-                    if (
-                        contentType.includes(
-                            "application/json"
-                        )
-                    ) {
-
-                        result =
-                            await response.json();
-
-                    }
-                    else {
-
-                        result = {
-                            message:
-                                "Phản hồi từ máy chủ không hợp lệ."
-                        };
-                    }
-
-
-                    // ===============================
-                    // Server trả lỗi
-                    // ===============================
-
-                    if (!response.ok) {
-
-                        const messages = [];
-
-
-                        if (result.message) {
-
-                            messages.push(
-                                result.message
-                            );
-                        }
-
-
-                        if (result.errors) {
-
-                            Object
-                                .values(
-                                    result.errors
-                                )
-                                .flat()
-                                .forEach(error => {
-
-                                    messages.push(
-                                        error
-                                    );
-                                });
-                        }
-
-
-                        quickCustomerError.textContent =
-                            messages.length > 0
-                                ? messages.join("\n")
-                                : "Không thể tạo khách hàng.";
-
-
-                        quickCustomerError.style
-                            .whiteSpace = "pre-line";
-
-
-                        quickCustomerError
-                            .classList
-                            .remove("d-none");
-
-
-                        return;
-                    }
-
-
-                    // ===============================
-                    // Thêm Customer mới vào dropdown
-                    // ===============================
-
-                    const customerSelect =
-                        document.getElementById(
-                            "CustomerId"
-                        );
-
-
-                    const customerText =
-                        `${result.customer.fullName} - ${result.customer.phoneNumber}`;
-
-
-                    const option =
-                        new Option(
-                            customerText,
-                            result.customer.id,
-                            true,
-                            true
-                        );
-
-
-                    customerSelect.add(option);
-
-
-                    // Xóa trạng thái validation lỗi nếu có
-                    customerSelect.classList.remove(
-                        "input-validation-error"
-                    );
-
-
-                    const customerValidation =
-                        document.querySelector(
-                            '[data-valmsg-for="CustomerId"]'
-                        );
-
-
-                    if (customerValidation) {
-
-                        customerValidation.textContent =
-                            "";
-
-                        customerValidation
-                            .classList
-                            .remove(
-                                "field-validation-error"
-                            );
-
-                        customerValidation
-                            .classList
-                            .add(
-                                "field-validation-valid"
-                            );
-                    }
-
-
-                    // ===============================
-                    // Reset Modal
-                    // ===============================
-
-                    quickCustomerForm.reset();
-
-
-                    const modalElement =
-                        document.getElementById(
-                            "quickCustomerModal"
-                        );
-
-
-                    const modal =
-                        bootstrap.Modal
-                            .getOrCreateInstance(
-                                modalElement
-                            );
-
-
-                    modal.hide();
-
+                    quickCustomerError.textContent = messages.join("\n") || "Không thể tạo khách hàng.";
+                    quickCustomerError.style.whiteSpace = "pre-line";
+                    quickCustomerError.classList.remove("d-none");
+                    return;
                 }
-                catch (error) {
 
-                    quickCustomerError.textContent =
-                        "Không thể tạo khách hàng. Vui lòng thử lại.";
+                const customerSelect = document.getElementById("CustomerId");
+                customerSelect.add(new Option(
+                    `${result.customer.fullName} - ${result.customer.phoneNumber}`,
+                    result.customer.id,
+                    true,
+                    true
+                ));
 
-
-                    quickCustomerError
-                        .classList
-                        .remove("d-none");
-                }
-                finally {
-
-                    submitButton.disabled = false;
-                }
+                quickCustomerForm.reset();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById("quickCustomerModal")).hide();
             }
-        );
+            catch {
+                quickCustomerError.textContent = "Không thể tạo khách hàng. Vui lòng thử lại.";
+                quickCustomerError.classList.remove("d-none");
+            }
+            finally {
+                submitButton.disabled = false;
+            }
+        });
 
-
-        // =====================================================
-        // RESET MODAL KHI ĐÓNG
-        // =====================================================
-
-        document
-            .getElementById(
-                "quickCustomerModal"
-            )
-            .addEventListener(
-                "hidden.bs.modal",
-                () => {
-
-                    quickCustomerError
-                        .classList
-                        .add("d-none");
-
-
-                    quickCustomerError.textContent =
-                        "";
-                }
-            );
-
+        document.getElementById("quickCustomerModal").addEventListener("hidden.bs.modal", () => {
+            quickCustomerError.classList.add("d-none");
+            quickCustomerError.textContent = "";
+        });
     </script>
 }

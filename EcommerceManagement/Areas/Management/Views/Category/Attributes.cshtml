@@ -1,0 +1,133 @@
+﻿@model CategoryAttributeConfigViewModel
+
+@{
+    ViewData["Title"] = "Thuộc tính danh mục";
+}
+
+<div class="page-heading mb-4">
+    <h3 class="mb-1">Thuộc tính cho @Model.CategoryName</h3>
+    <p class="text-muted mb-0">
+        Chọn đúng bộ thuộc tính mà sản phẩm trong danh mục này được phép sử dụng.
+    </p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="Attributes" method="post" id="categoryAttributeForm">
+            <input asp-for="CategoryId" type="hidden" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+            <div class="alert alert-light mb-4">
+                <strong>Thông tin chung</strong> dùng cho Hãng, Nhu cầu, Đối tượng...
+                <strong>Tạo biến thể</strong> dùng cho Màu, Size, Dung lượng, RAM...
+                Một thuộc tính không nên dùng đồng thời ở cả hai vai trò.
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Thuộc tính</th>
+                            <th class="text-center">Thông tin chung</th>
+                            <th class="text-center">Tạo biến thể</th>
+                            <th class="text-center">Bắt buộc</th>
+                            <th style="width: 130px;">Thứ tự</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!Model.Attributes.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    Chưa có thuộc tính sản phẩm đang hoạt động.
+                                </td>
+                            </tr>
+                        }
+
+                        @for (int i = 0; i < Model.Attributes.Count; i++)
+                        {
+                            var item = Model.Attributes[i];
+
+                            <tr class="attribute-row">
+                                <td>
+                                    <div class="fw-semibold">@item.DefinitionName</div>
+                                    <code>@item.DefinitionCode</code>
+
+                                    <input asp-for="Attributes[i].DefinitionId" type="hidden" />
+                                    <input asp-for="Attributes[i].DefinitionName" type="hidden" />
+                                    <input asp-for="Attributes[i].DefinitionCode" type="hidden" />
+                                    <input asp-for="Attributes[i].CanUseForProduct" type="hidden" />
+                                    <input asp-for="Attributes[i].CanUseForVariant" type="hidden" />
+                                </td>
+
+                                <td class="text-center">
+                                    <input asp-for="Attributes[i].UseForProduct"
+                                           class="form-check-input use-product"
+                                           disabled="@(!item.CanUseForProduct)" />
+                                </td>
+
+                                <td class="text-center">
+                                    <input asp-for="Attributes[i].UseForVariant"
+                                           class="form-check-input use-variant"
+                                           disabled="@(!item.CanUseForVariant)" />
+                                </td>
+
+                                <td class="text-center">
+                                    <input asp-for="Attributes[i].IsRequired"
+                                           class="form-check-input is-required" />
+                                </td>
+
+                                <td>
+                                    <input asp-for="Attributes[i].DisplayOrder"
+                                           type="number"
+                                           min="0"
+                                           class="form-control form-control-sm" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll(".attribute-row").forEach(row => {
+            const product = row.querySelector(".use-product");
+            const variant = row.querySelector(".use-variant");
+            const required = row.querySelector(".is-required");
+
+            function syncRequired() {
+                required.disabled = !product.checked && !variant.checked;
+
+                if (required.disabled)
+                    required.checked = false;
+            }
+
+            product?.addEventListener("change", () => {
+                if (product.checked && variant)
+                    variant.checked = false;
+
+                syncRequired();
+            });
+
+            variant?.addEventListener("change", () => {
+                if (variant.checked && product)
+                    product.checked = false;
+
+                syncRequired();
+            });
+
+            syncRequired();
+        });
+    </script>
+}

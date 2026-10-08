@@ -16,7 +16,6 @@ namespace EcommerceManagement.Core.ViewModels
         };
 
         public List<CustomerViewModel> Customers { get; set; } = new();
-
-        public List<ProductViewModel> Products { get; set; } = new();
+        public List<ProductVariantOptionViewModel> ProductVariants { get; set; } = new();
     }
 }

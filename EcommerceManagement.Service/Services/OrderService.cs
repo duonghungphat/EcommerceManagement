@@ -17,32 +17,26 @@ namespace EcommerceManagement.Service.Services
             _unitOfWork = unitOfWork;
             _auditLogService = auditLogService;
         }
+
         public async Task<OrderListViewModel> SearchAsync(string? searchTerm, OrderStatus? status, DateTime? fromDate, DateTime? toDate)
         {
-            var query = _unitOfWork.Orders
-                .BuildQuery(o => true);
+            var query = _unitOfWork.Orders.BuildQuery(o => true);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 searchTerm = searchTerm.Trim();
-
                 query = query.Where(o => o.OrderCode.Contains(searchTerm) || o.Customer.FullName.Contains(searchTerm));
             }
 
             if (status.HasValue)
-            {
                 query = query.Where(o => o.Status == status.Value);
-            }
 
             if (fromDate.HasValue)
-            {
                 query = query.Where(o => o.CreatedAt >= fromDate.Value.Date);
-            }
 
             if (toDate.HasValue)
             {
                 DateTime end = toDate.Value.Date.AddDays(1);
-
                 query = query.Where(o => o.CreatedAt < end);
             }
 
@@ -90,8 +84,10 @@ namespace EcommerceManagement.Service.Services
                     Items = o.OrderItems
                         .Select(i => new OrderItemViewModel
                         {
-                            ProductId = i.ProductId,
-                            ProductName = i.Product.Name,
+                            ProductVariantId = i.ProductVariantId,
+                            ProductName = i.ProductVariant.Product.Name,
+                            VariantName = i.ProductVariant.Name,
+                            SKU = i.ProductVariant.SKU,
                             Quantity = i.Quantity,
                             UnitPrice = i.UnitPrice
                         })
@@ -135,14 +131,10 @@ namespace EcommerceManagement.Service.Services
         public async Task<int> CreateAsync(OrderCreateViewModel model, int createdByUserId, string ipAddress)
         {
             if (model.Items == null || model.Items.Count == 0)
-            {
                 throw new InvalidOperationException("Đơn hàng phải có ít nhất một sản phẩm.");
-            }
 
             if (model.Items.Any(i => i.Quantity < 1))
-            {
                 throw new InvalidOperationException("Số lượng mỗi sản phẩm phải từ 1 trở lên.");
-            }
 
             var customer = await _unitOfWork.Customers.GetByIdAsync(model.CustomerId);
 
@@ -154,10 +146,7 @@ namespace EcommerceManagement.Service.Services
             if (creator == null || !creator.IsActive)
                 throw new InvalidOperationException("Người tạo đơn không hợp lệ.");
 
-            string randomPart = Guid.NewGuid()
-                .ToString("N")[..4]
-                .ToUpperInvariant();
-
+            string randomPart = Guid.NewGuid().ToString("N")[..4].ToUpperInvariant();
             string orderCode = $"DH-{DateTime.Now:yyMMddHHmmss}-{randomPart}";
 
             var order = new Order
@@ -171,45 +160,56 @@ namespace EcommerceManagement.Service.Services
             };
 
             var groupedItems = model.Items
-                .GroupBy(i => i.ProductId)
+                .GroupBy(i => i.ProductVariantId)
                 .Select(g => new
                 {
-                    ProductId = g.Key,
+                    ProductVariantId = g.Key,
                     Quantity = g.Sum(x => x.Quantity)
-                });
+                })
+                .ToList();
 
             foreach (var item in groupedItems)
             {
-                var product = await _unitOfWork.Products.GetByIdAsync(item.ProductId);
+                var variant = await _unitOfWork.ProductVariants.GetByIdAsync(item.ProductVariantId);
+
+                if (variant == null)
+                    throw new InvalidOperationException("Biến thể sản phẩm không tồn tại.");
+
+                var product = await _unitOfWork.Products.GetByIdAsync(variant.ProductId);
 
                 if (product == null)
                     throw new InvalidOperationException("Sản phẩm không tồn tại.");
 
                 if (product.Status != ProductStatus.Selling)
-                {
                     throw new InvalidOperationException($"Sản phẩm {product.Name} đã ngừng bán.");
-                }
 
-                if (product.StockQuantity < item.Quantity)
+                if (variant.StockQuantity < item.Quantity)
                 {
-                    throw new InvalidOperationException($"Sản phẩm {product.Name} không đủ hàng. " + $"Tồn kho hiện tại: {product.StockQuantity}.");
+                    throw new InvalidOperationException(
+                        $"Biến thể {product.Name} - {variant.Name} không đủ hàng. Tồn kho hiện tại: {variant.StockQuantity}.");
                 }
 
                 order.OrderItems.Add(new OrderItem
                 {
-                    ProductId = product.Id,
+                    ProductVariantId = variant.Id,
                     Quantity = item.Quantity,
-                    UnitPrice = product.Price
+                    UnitPrice = variant.Price
                 });
 
-                order.TotalAmount += product.Price * item.Quantity;
+                order.TotalAmount += variant.Price * item.Quantity;
 
-                product.StockQuantity -= item.Quantity;
+                variant.StockQuantity -= item.Quantity;
             }
 
             await _unitOfWork.Orders.AddAsync(order);
 
-            await _auditLogService.RecordAsync("CreateOrder", "Order", null, $"Tạo đơn hàng {order.OrderCode}, tổng tiền {order.TotalAmount:N0} đ.", ipAddress, createdByUserId);
+            await _auditLogService.RecordAsync(
+                "CreateOrder",
+                "Order",
+                null,
+                $"Tạo đơn hàng {order.OrderCode}, tổng tiền {order.TotalAmount:N0} đ.",
+                ipAddress,
+                createdByUserId);
 
             try
             {
@@ -217,7 +217,7 @@ namespace EcommerceManagement.Service.Services
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                throw new InvalidOperationException("Tồn kho sản phẩm vừa thay đổi. Vui lòng kiểm tra lại đơn hàng.", ex);
+                throw new InvalidOperationException("Tồn kho biến thể vừa thay đổi. Vui lòng kiểm tra lại đơn hàng.", ex);
             }
 
             return order.Id;
@@ -242,18 +242,24 @@ namespace EcommerceManagement.Service.Services
 
             foreach (var item in items)
             {
-                var product = await _unitOfWork.Products.GetByIdAsync(item.ProductId);
+                var variant = await _unitOfWork.ProductVariants.GetByIdAsync(item.ProductVariantId);
 
-                if (product == null)
-                    throw new InvalidOperationException("Không tìm thấy sản phẩm trong đơn.");
+                if (variant == null)
+                    throw new InvalidOperationException("Không tìm thấy biến thể sản phẩm trong đơn.");
 
-                product.StockQuantity += item.Quantity;
+                variant.StockQuantity += item.Quantity;
             }
 
             order.Status = OrderStatus.Cancelled;
             order.PaymentVersion++;
 
-            await _auditLogService.RecordAsync("CancelOrder", "Order", order.Id, $"Hủy đơn hàng {order.OrderCode}.", ipAddress, actorUserId);
+            await _auditLogService.RecordAsync(
+                "CancelOrder",
+                "Order",
+                order.Id,
+                $"Hủy đơn hàng {order.OrderCode}.",
+                ipAddress,
+                actorUserId);
 
             try
             {
@@ -261,7 +267,7 @@ namespace EcommerceManagement.Service.Services
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                throw new InvalidOperationException("Đơn hàng vừa được thay đổi. Vui lòng thử lại.", ex);
+                throw new InvalidOperationException("Đơn hàng hoặc tồn kho vừa được thay đổi. Vui lòng thử lại.", ex);
             }
         }
 
@@ -270,21 +276,18 @@ namespace EcommerceManagement.Service.Services
             var order = await _unitOfWork.Orders.GetByIdAsync(id);
 
             if (order == null)
-            {
                 throw new InvalidOperationException("Đơn hàng không tồn tại.");
-            }
 
             if (order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Completed)
-            {
                 throw new InvalidOperationException("Đơn hàng này không thể đổi trạng thái.");
-            }
 
-            bool validTransition = (order.Status == OrderStatus.Pending && newStatus == OrderStatus.Confirmed) || (order.Status == OrderStatus.Confirmed && newStatus == OrderStatus.Shipping) || (order.Status == OrderStatus.Shipping && newStatus == OrderStatus.Completed);
+            bool validTransition =
+                (order.Status == OrderStatus.Pending && newStatus == OrderStatus.Confirmed) ||
+                (order.Status == OrderStatus.Confirmed && newStatus == OrderStatus.Shipping) ||
+                (order.Status == OrderStatus.Shipping && newStatus == OrderStatus.Completed);
 
             if (!validTransition)
-            {
                 throw new InvalidOperationException("Trạng thái mới không đúng quy trình.");
-            }
 
             order.Status = newStatus;
             order.PaymentVersion++;
@@ -299,7 +302,13 @@ namespace EcommerceManagement.Service.Services
                 _ => "Không xác định"
             };
 
-            await _auditLogService.RecordAsync("UpdateOrderStatus", "Order", order.Id, $"Cập nhật đơn {order.OrderCode} sang trạng thái {statusText}.", ipAddress, actorUserId);
+            await _auditLogService.RecordAsync(
+                "UpdateOrderStatus",
+                "Order",
+                order.Id,
+                $"Cập nhật đơn {order.OrderCode} sang trạng thái {statusText}.",
+                ipAddress,
+                actorUserId);
 
             try
             {
@@ -307,7 +316,9 @@ namespace EcommerceManagement.Service.Services
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                throw new InvalidOperationException("Đơn hàng vừa được thay đổi bởi một thao tác khác. Vui lòng tải lại trang và thử lại.", ex);
+                throw new InvalidOperationException(
+                    "Đơn hàng vừa được thay đổi bởi một thao tác khác. Vui lòng tải lại trang và thử lại.",
+                    ex);
             }
         }
     }

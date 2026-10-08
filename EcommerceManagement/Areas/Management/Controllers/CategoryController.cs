@@ -11,10 +11,12 @@ namespace EcommerceManagement.Areas.Management.Controllers
     public class CategoryController : Controller
     {
         private readonly ICategoryService _categoryService;
+        private readonly IProductAttributeService _productAttributeService;
 
-        public CategoryController(ICategoryService categoryService)
+        public CategoryController(ICategoryService categoryService, IProductAttributeService productAttributeService)
         {
             _categoryService = categoryService;
+            _productAttributeService = productAttributeService;
         }
 
         public async Task<IActionResult> Index()
@@ -126,6 +128,55 @@ namespace EcommerceManagement.Areas.Management.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> Attributes(int id)
+        {
+            var model = await _productAttributeService.GetCategoryConfigAsync(id);
+
+            if (model == null)
+                return NotFound();
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Attributes(CategoryAttributeConfigViewModel model)
+        {
+            try
+            {
+                await _productAttributeService.SaveCategoryConfigAsync(model, GetCurrentUserId(), GetIpAddress());
+                TempData["Success"] = "Cập nhật bộ thuộc tính danh mục thành công.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                var refreshed = await _productAttributeService.GetCategoryConfigAsync(model.CategoryId);
+
+                if (refreshed == null)
+                    return NotFound();
+
+                var posted = model.Attributes.ToDictionary(x => x.DefinitionId);
+
+                foreach (var item in refreshed.Attributes)
+                {
+                    if (!posted.TryGetValue(item.DefinitionId, out var current))
+                        continue;
+
+                    item.UseForProduct = current.UseForProduct;
+                    item.UseForVariant = current.UseForVariant;
+                    item.IsRequired = current.IsRequired;
+                    item.DisplayOrder = current.DisplayOrder;
+                }
+
+                return View(refreshed);
+            }
         }
 
         private async Task PopulateParentCategoriesAsync(CategoryViewModel model, int? excludeCategoryId = null)

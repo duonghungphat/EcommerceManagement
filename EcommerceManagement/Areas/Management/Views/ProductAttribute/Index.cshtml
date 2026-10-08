@@ -1,0 +1,93 @@
+﻿@model IEnumerable<ProductAttributeDefinitionViewModel>
+
+@{
+    ViewData["Title"] = "Thuộc tính sản phẩm";
+}
+
+<div class="page-heading mb-4">
+    <div class="d-flex justify-content-between align-items-end gap-3">
+        <div>
+            <h3 class="mb-1">Thuộc tính sản phẩm</h3>
+            <p class="text-muted mb-0">Quản lý các thuộc tính dùng cho phân loại, lọc và tạo biến thể.</p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">Thêm thuộc tính</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Mã</th>
+                    <th>Sử dụng</th>
+                    <th>Bộ lọc</th>
+                    <th>Giá trị</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có thuộc tính sản phẩm.</td>
+                    </tr>
+                }
+
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Name</td>
+                        <td><code>@item.Code</code></td>
+
+                        <td>
+                            @if (item.CanUseForVariant)
+                            {
+                                <span class="badge bg-light-success">Biến thể</span>
+                            }
+                            else if (item.CanUseForProduct)
+                            {
+                                <span class="badge bg-light-primary">Sản phẩm</span>
+                            }
+                        </td>
+
+                        <td>
+                            @(item.IsFilterable ? "Có" : "Không")
+                        </td>
+
+                        <td>
+                            <a asp-action="Values" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
+                                @item.ValueCount giá trị
+                            </a>
+                        </td>
+
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-light-success">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light-secondary">Tạm ngưng</span>
+                            }
+                        </td>
+
+                        <td class="text-end">
+                            <div class="crud-actions">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Sửa</a>
+
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa thuộc tính này?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

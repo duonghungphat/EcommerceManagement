@@ -3,6 +3,7 @@ using System;
 using EcommerceManagement.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcommerceManagement.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261007042714_MoveOrderItemsToProductVariant")]
+    partial class MoveOrderItemsToProductVariant
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -316,117 +319,16 @@ namespace EcommerceManagement.Data.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductAttributeDefinition", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<bool>("AllowMultipleProductValues")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("CanUseForProduct")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("CanUseForVariant")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsFilterable")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("ProductAttributeDefinitions");
-                });
-
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductAttributeSelection", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("AttributeDefinitionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AttributeValueId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttributeDefinitionId");
-
-                    b.HasIndex("AttributeValueId", "AttributeDefinitionId");
-
-                    b.HasIndex("ProductId", "AttributeValueId")
-                        .IsUnique();
-
-                    b.ToTable("ProductAttributeSelections");
-                });
-
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductAttributeValue", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("AttributeDefinitionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttributeDefinitionId", "Value")
-                        .IsUnique();
-
-                    b.ToTable("ProductAttributeValues");
-                });
-
             modelBuilder.Entity("EcommerceManagement.Core.Models.ProductVariant", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("ImagePath")
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
-
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
@@ -452,33 +354,6 @@ namespace EcommerceManagement.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("ProductVariants");
-                });
-
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductVariantAttributeSelection", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("AttributeDefinitionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AttributeValueId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductVariantId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttributeDefinitionId");
-
-                    b.HasIndex("AttributeValueId", "AttributeDefinitionId");
-
-                    b.HasIndex("ProductVariantId", "AttributeDefinitionId")
-                        .IsUnique();
-
-                    b.ToTable("ProductVariantAttributeSelections");
                 });
 
             modelBuilder.Entity("EcommerceManagement.Core.Models.Role", b =>
@@ -591,45 +466,6 @@ namespace EcommerceManagement.Data.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductAttributeSelection", b =>
-                {
-                    b.HasOne("EcommerceManagement.Core.Models.ProductAttributeDefinition", "AttributeDefinition")
-                        .WithMany()
-                        .HasForeignKey("AttributeDefinitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EcommerceManagement.Core.Models.Product", "Product")
-                        .WithMany("AttributeSelections")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EcommerceManagement.Core.Models.ProductAttributeValue", "AttributeValue")
-                        .WithMany("ProductSelections")
-                        .HasForeignKey("AttributeValueId", "AttributeDefinitionId")
-                        .HasPrincipalKey("Id", "AttributeDefinitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AttributeDefinition");
-
-                    b.Navigation("AttributeValue");
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductAttributeValue", b =>
-                {
-                    b.HasOne("EcommerceManagement.Core.Models.ProductAttributeDefinition", "AttributeDefinition")
-                        .WithMany("Values")
-                        .HasForeignKey("AttributeDefinitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AttributeDefinition");
-                });
-
             modelBuilder.Entity("EcommerceManagement.Core.Models.ProductVariant", b =>
                 {
                     b.HasOne("EcommerceManagement.Core.Models.Product", "Product")
@@ -639,34 +475,6 @@ namespace EcommerceManagement.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductVariantAttributeSelection", b =>
-                {
-                    b.HasOne("EcommerceManagement.Core.Models.ProductAttributeDefinition", "AttributeDefinition")
-                        .WithMany()
-                        .HasForeignKey("AttributeDefinitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EcommerceManagement.Core.Models.ProductVariant", "ProductVariant")
-                        .WithMany("AttributeSelections")
-                        .HasForeignKey("ProductVariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EcommerceManagement.Core.Models.ProductAttributeValue", "AttributeValue")
-                        .WithMany("VariantSelections")
-                        .HasForeignKey("AttributeValueId", "AttributeDefinitionId")
-                        .HasPrincipalKey("Id", "AttributeDefinitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AttributeDefinition");
-
-                    b.Navigation("AttributeValue");
-
-                    b.Navigation("ProductVariant");
                 });
 
             modelBuilder.Entity("EcommerceManagement.Core.Models.ApplicationUser", b =>
@@ -697,27 +505,11 @@ namespace EcommerceManagement.Data.Migrations
 
             modelBuilder.Entity("EcommerceManagement.Core.Models.Product", b =>
                 {
-                    b.Navigation("AttributeSelections");
-
                     b.Navigation("Variants");
-                });
-
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductAttributeDefinition", b =>
-                {
-                    b.Navigation("Values");
-                });
-
-            modelBuilder.Entity("EcommerceManagement.Core.Models.ProductAttributeValue", b =>
-                {
-                    b.Navigation("ProductSelections");
-
-                    b.Navigation("VariantSelections");
                 });
 
             modelBuilder.Entity("EcommerceManagement.Core.Models.ProductVariant", b =>
                 {
-                    b.Navigation("AttributeSelections");
-
                     b.Navigation("OrderItems");
                 });
 

@@ -1,0 +1,117 @@
+﻿@model ProductAttributeValuesPageViewModel
+
+@{
+    ViewData["Title"] = "Giá trị thuộc tính";
+}
+
+<div class="page-heading mb-4">
+    <div class="d-flex justify-content-between align-items-end gap-3">
+        <div>
+            <h3 class="mb-1">@Model.AttributeName</h3>
+            <p class="text-muted mb-0">Quản lý các giá trị có thể chọn của thuộc tính.</p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="mb-3">Thêm giá trị</h5>
+
+        <form asp-action="CreateValue" method="post">
+            <input type="hidden" name="AttributeDefinitionId" value="@Model.AttributeDefinitionId" />
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label">Giá trị</label>
+                    <input name="Value" class="form-control" placeholder="Ví dụ: Xanh" required maxlength="100" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Thứ tự hiển thị</label>
+                    <input name="DisplayOrder" type="number" min="0" value="0" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <div class="form-check form-switch mb-2">
+                        <input name="IsActive" type="checkbox" value="true" class="form-check-input" checked />
+                        <input name="IsActive" type="hidden" value="false" />
+                        <label class="form-check-label">Hoạt động</label>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Thêm</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Giá trị</th>
+                    <th>Thứ tự</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!Model.Values.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Chưa có giá trị.</td>
+                    </tr>
+                }
+
+                @foreach (var item in Model.Values)
+                {
+                    <tr>
+                        <td colspan="4" class="p-0">
+                            <form asp-action="UpdateValue" method="post" class="row g-0 align-items-center">
+                                <input type="hidden" name="Id" value="@item.Id" />
+                                <input type="hidden" name="AttributeDefinitionId" value="@item.AttributeDefinitionId" />
+
+                                <div class="col-md-5 p-2">
+                                    <input name="Value" value="@item.Value" class="form-control form-control-sm" required maxlength="100" />
+                                </div>
+
+                                <div class="col-md-2 p-2">
+                                    <input name="DisplayOrder" type="number" min="0" value="@item.DisplayOrder" class="form-control form-control-sm" />
+                                </div>
+
+                                <div class="col-md-2 p-2">
+                                    <div class="form-check form-switch">
+                                        <input name="IsActive" type="checkbox" value="true" class="form-check-input" checked="@item.IsActive" />
+                                        <input name="IsActive" type="hidden" value="false" />
+                                        <label class="form-check-label">
+                                            @(item.IsActive ? "Hoạt động" : "Tạm ngưng")
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3 p-2 text-end">
+                                    <button type="submit" class="btn btn-warning btn-sm">Lưu</button>
+
+                                    <button type="submit"
+                                            formaction="@Url.Action("DeleteValue", "ProductAttribute", new { area = "Management" })"
+                                            name="attributeDefinitionId"
+                                            value="@item.AttributeDefinitionId"
+                                            class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Bạn có chắc muốn xóa giá trị này?');">
+                                        Xóa
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

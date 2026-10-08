@@ -1,0 +1,139 @@
+﻿@model ProductAttributeDefinitionViewModel
+
+@{
+    ViewData["Title"] = "Thêm thuộc tính";
+}
+
+<div class="page-heading mb-4">
+    <h3 class="mb-1">Thêm thuộc tính sản phẩm</h3>
+    <p class="text-muted mb-0">Tạo thuộc tính mới cho sản phẩm hoặc biến thể.</p>
+</div>
+
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="Ví dụ: Màu sắc" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Code" class="form-label"></label>
+                    <input asp-for="Code" class="form-control" placeholder="Ví dụ: color" />
+                    <span asp-validation-for="Code" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DisplayOrder" class="form-label"></label>
+                    <input asp-for="DisplayOrder" type="number" min="0" class="form-control" />
+                    <span asp-validation-for="DisplayOrder" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="alert alert-light border">
+                Chọn một cấp sử dụng chính: <strong>Sản phẩm</strong> cho thông tin chung như Hãng/Nhu cầu; <strong>Biến thể</strong> cho thuộc tính tạo SKU như Màu/Size/Dung lượng. Thuộc tính biến thể vẫn có thể bật "Cho phép lọc".
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="CanUseForProduct" class="form-check-input" />
+                        <label asp-for="CanUseForProduct" class="form-check-label"></label>
+                    </div>
+
+                    <small class="text-muted">
+                        Dùng cho thông tin/phân loại ở cấp sản phẩm. Ví dụ Hãng, Nhu cầu, Đối tượng.
+                    </small>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="CanUseForVariant" class="form-check-input" />
+                        <label asp-for="CanUseForVariant" class="form-check-label"></label>
+                    </div>
+
+                    <small class="text-muted">
+                        Dùng để tạo SKU riêng. Ví dụ Màu sắc, Size, Dung lượng, RAM.
+                    </small>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="IsFilterable" class="form-check-input" />
+                        <label asp-for="IsFilterable" class="form-check-label"></label>
+                    </div>
+
+                    <small class="text-muted">
+                        Cho phép dùng thuộc tính làm bộ lọc sản phẩm.
+                    </small>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="AllowMultipleProductValues" class="form-check-input" />
+                        <label asp-for="AllowMultipleProductValues" class="form-check-label"></label>
+                    </div>
+
+                    <small class="text-muted">
+                        Ví dụ Laptop có thể vừa thuộc Văn phòng vừa thuộc Sinh viên.
+                    </small>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Lưu</button>
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const productSwitch = document.getElementById("CanUseForProduct");
+        const variantSwitch = document.getElementById("CanUseForVariant");
+        const multipleSwitch = document.getElementById("AllowMultipleProductValues");
+
+        function syncAttributeScope(changed) {
+            if (changed === "variant" && variantSwitch.checked) {
+                productSwitch.checked = false;
+                multipleSwitch.checked = false;
+                multipleSwitch.disabled = true;
+            }
+
+            if (changed === "product" && productSwitch.checked) {
+                variantSwitch.checked = false;
+                multipleSwitch.disabled = false;
+            }
+
+            if (!variantSwitch.checked)
+                multipleSwitch.disabled = !productSwitch.checked;
+        }
+
+        variantSwitch.addEventListener("change", () => syncAttributeScope("variant"));
+        productSwitch.addEventListener("change", () => syncAttributeScope("product"));
+
+        if (variantSwitch.checked) {
+            productSwitch.checked = false;
+            multipleSwitch.checked = false;
+        }
+
+        multipleSwitch.disabled = variantSwitch.checked || !productSwitch.checked;
+    </script>
+}

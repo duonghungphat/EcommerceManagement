@@ -8,7 +8,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
         <div>
             <h3 class="mb-1">Danh sách sản phẩm</h3>
-            <p class="text-muted mb-0">Theo dõi sản phẩm, giá bán và tồn kho.</p>
+            <p class="text-muted mb-0">Mỗi dòng là một sản phẩm chung; SKU, giá và tồn kho được quản lý theo từng biến thể.</p>
         </div>
 
         @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
@@ -22,7 +22,7 @@
     <div class="card-body">
         <form method="get" asp-action="Index" class="row g-2 align-items-end crud-filter">
             <div class="col-md-5">
-                <input asp-for="SearchTerm" class="form-control" placeholder="Tìm theo tên hoặc SKU..." />
+                <input asp-for="SearchTerm" class="form-control" placeholder="Tìm theo tên sản phẩm hoặc SKU biến thể..." />
             </div>
 
             <div class="col-md-4">
@@ -48,12 +48,12 @@
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Ảnh</th>
-                    <th>Tên</th>
-                    <th>SKU</th>
+                    <th>Ảnh đại diện</th>
+                    <th>Sản phẩm</th>
                     <th>Danh mục</th>
-                    <th>Giá</th>
-                    <th>Tồn kho</th>
+                    <th>Biến thể</th>
+                    <th>Giá bán</th>
+                    <th>Tổng tồn</th>
                     <th>Trạng thái</th>
                     <th class="text-end">Thao tác</th>
                 </tr>
@@ -68,8 +68,7 @@
 
                 @foreach (var item in Model.Products)
                 {
-                    string toggleMessage =
-                    item.Status == ProductStatus.Selling
+                    string toggleMessage = item.Status == ProductStatus.Selling
                     ? "Bạn có chắc muốn ngừng bán sản phẩm này?"
                     : "Bạn có chắc muốn bật bán lại sản phẩm này?";
 
@@ -89,19 +88,45 @@
                         </td>
 
                         <td class="fw-semibold">@item.Name</td>
-                        <td>@item.SKU</td>
                         <td>@item.CategoryName</td>
-                        <td>@item.Price.ToString("N0") đ</td>
 
                         <td>
-                            @if (item.StockQuantity <= 10)
+                            @if (item.VariantCount > 0)
                             {
-                                <span class="badge bg-danger">@item.StockQuantity</span>
+                                <span class="badge bg-light-primary">@item.VariantCount biến thể</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Chưa có</span>
+                            }
+                        </td>
+
+                        <td>
+                            @if (item.VariantCount == 0)
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                            else if (item.MinPrice == item.MaxPrice)
+                            {
+                                <span class="fw-semibold">@item.MinPrice.ToString("N0") đ</span>
+                            }
+                            else
+                            {
+                                <span class="fw-semibold">
+                                    @item.MinPrice.ToString("N0") - @item.MaxPrice.ToString("N0") đ
+                                </span>
+                            }
+                        </td>
+
+                        <td>
+                            @if (item.TotalStockQuantity <= 10)
+                            {
+                                <span class="badge bg-danger">@item.TotalStockQuantity</span>
                                 <div class="small text-danger mt-1">Sắp hết hàng</div>
                             }
                             else
                             {
-                                <span class="fw-semibold">@item.StockQuantity</span>
+                                <span class="fw-semibold">@item.TotalStockQuantity</span>
                             }
                         </td>
 
@@ -127,31 +152,17 @@
                                           method="post"
                                           onsubmit="return confirm('@toggleMessage');">
 
-                                        <input type="hidden"
-                                               name="searchTerm"
-                                               value="@Model.SearchTerm" />
-
-                                        <input type="hidden"
-                                               name="categoryId"
-                                               value="@Model.CategoryId" />
-
-                                        <input type="hidden"
-                                               name="page"
-                                               value="@Model.Page" />
+                                        <input type="hidden" name="searchTerm" value="@Model.SearchTerm" />
+                                        <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                                        <input type="hidden" name="page" value="@Model.Page" />
 
                                         @if (item.Status == ProductStatus.Selling)
                                         {
-                                            <button type="submit"
-                                                    class="btn btn-secondary btn-sm">
-                                                Ngừng bán
-                                            </button>
+                                            <button type="submit" class="btn btn-secondary btn-sm">Ngừng bán</button>
                                         }
                                         else
                                         {
-                                            <button type="submit"
-                                                    class="btn btn-success btn-sm">
-                                                Bật bán
-                                            </button>
+                                            <button type="submit" class="btn btn-success btn-sm">Bật bán</button>
                                         }
                                     </form>
 

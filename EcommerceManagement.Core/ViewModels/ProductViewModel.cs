@@ -12,13 +12,6 @@ namespace EcommerceManagement.Core.ViewModels
         [Display(Name = "Tên sản phẩm")]
         public string Name { get; set; } = string.Empty;
 
-        // Các field này được giữ tạm để tương thích với Order/Dashboard hiện tại.
-        // Sau khi chuyển toàn bộ nghiệp vụ sang ProductVariant sẽ xóa.
-        public string SKU { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public int StockQuantity { get; set; }
-        public int OriginalStockQuantity { get; set; }
-
         [Display(Name = "Trạng thái")]
         public ProductStatus Status { get; set; } = ProductStatus.Selling;
 
@@ -26,14 +19,18 @@ namespace EcommerceManagement.Core.ViewModels
         [Display(Name = "Danh mục")]
         public int CategoryId { get; set; }
 
-        [Display(Name = "Danh mục")]
         public string? CategoryName { get; set; }
-
         public string? ImagePath { get; set; }
 
+        // Thông tin tổng hợp từ ProductVariant, không còn lưu trực tiếp trên Product.
         public int VariantCount { get; set; }
+        public decimal MinPrice { get; set; }
+        public decimal MaxPrice { get; set; }
+        public int TotalStockQuantity { get; set; }
 
         public List<CategoryViewModel> Categories { get; set; } = new();
+        public List<ProductAttributeInputViewModel> ProductAttributes { get; set; } = new();
+        public List<ProductAttributeInputViewModel> VariantAttributes { get; set; } = new();
 
         public List<ProductVariantViewModel> Variants { get; set; } = new()
         {

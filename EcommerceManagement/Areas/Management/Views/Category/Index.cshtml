@@ -67,6 +67,7 @@
                             @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
                             {
                                 <div class="crud-actions">
+                                    <a asp-action="Attributes" asp-route-id="@item.Id" class="btn btn-info btn-sm">Thuộc tính</a>
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Sửa</a>
 
                                     <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa danh mục này?');">

@@ -32,6 +32,7 @@ builder.Services.AddScoped<IAuditLogService,AuditLogService>();
 builder.Services.AddScoped<IAccountService,AccountService>();
 builder.Services.AddScoped<IAuthService,AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IProductAttributeService, ProductAttributeService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
     {

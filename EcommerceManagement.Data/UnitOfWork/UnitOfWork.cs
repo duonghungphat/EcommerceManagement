@@ -10,6 +10,12 @@ namespace EcommerceManagement.Data.UnitOfWork
 
         public IRepository<Product> Products { get; }
         public IRepository<ProductVariant> ProductVariants { get; }
+        public IRepository<ProductAttributeDefinition> ProductAttributeDefinitions { get; }
+        public IRepository<ProductAttributeValue> ProductAttributeValues { get; }
+        public IRepository<ProductAttributeSelection> ProductAttributeSelections { get; }
+        public IRepository<ProductVariantAttributeSelection> ProductVariantAttributeSelections { get; }
+        public IRepository<CategoryAttributeDefinition> CategoryAttributeDefinitions { get; }
+
         public IRepository<Category> Categories { get; }
         public IRepository<Customer> Customers { get; }
         public IRepository<Order> Orders { get; }
@@ -25,6 +31,12 @@ namespace EcommerceManagement.Data.UnitOfWork
 
             Products = new Repository<Product>(context);
             ProductVariants = new Repository<ProductVariant>(context);
+            ProductAttributeDefinitions = new Repository<ProductAttributeDefinition>(context);
+            ProductAttributeValues = new Repository<ProductAttributeValue>(context);
+            ProductAttributeSelections = new Repository<ProductAttributeSelection>(context);
+            ProductVariantAttributeSelections = new Repository<ProductVariantAttributeSelection>(context);
+            CategoryAttributeDefinitions = new Repository<CategoryAttributeDefinition>(context);
+
             Categories = new Repository<Category>(context);
             Customers = new Repository<Customer>(context);
             Orders = new Repository<Order>(context);

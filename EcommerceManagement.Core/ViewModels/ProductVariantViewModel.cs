@@ -6,9 +6,6 @@ namespace EcommerceManagement.Core.ViewModels
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Tên biến thể không được để trống.")]
-        [StringLength(100, ErrorMessage = "Tên biến thể tối đa 100 ký tự.")]
-        [Display(Name = "Tên biến thể")]
         public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "SKU không được để trống.")]
@@ -25,7 +22,9 @@ namespace EcommerceManagement.Core.ViewModels
         public int StockQuantity { get; set; }
 
         public int OriginalStockQuantity { get; set; }
-
         public int ProductId { get; set; }
+        public string? ImagePath { get; set; }
+
+        public List<int> AttributeValueIds { get; set; } = new();
     }
 }
